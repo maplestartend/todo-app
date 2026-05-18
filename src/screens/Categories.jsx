@@ -11,9 +11,9 @@ export default function Categories({ store, nav }) {
   const items = store.todos.filter(t => t.cat === tab);
   const catColor = getCategoryColor(tab, T);
 
-  return (
-    <MWPage scrollKey={`folders-${tab}`}>
-      <MWNavBar eyebrow="CATEGORIES" title="分類" />
+  const header = (
+    <>
+      <MWNavBar eyebrow="CATEGORIES" title="分類" sticky={false} />
 
       <div style={{ padding: '4px 22px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         {Object.entries(CATEGORIES).map(([k, v]) => {
@@ -22,14 +22,20 @@ export default function Categories({ store, nav }) {
           const undone = store.todos.filter(t => t.cat === k && t.state !== 'done').length;
           const sel = tab === k;
           return (
-            <button key={k} onClick={() => setTab(k)} style={{
-              padding: '14px 12px', textAlign: 'left',
-              background: sel ? col : T.paperRaised,
-              color: sel ? '#fff' : T.ink,
-              border: `1px solid ${sel ? col : T.hairline + '55'}`,
-              borderRadius: 14, cursor: 'pointer',
-              transition: 'all 200ms',
-            }}>
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              aria-pressed={sel}
+              aria-label={`${v.label} 分類，${cnt} 件任務${undone > 0 ? `，${undone} 件未完成` : ''}`}
+              style={{
+                padding: '14px 12px', textAlign: 'left', minHeight: 48,
+                background: sel ? col : T.paperRaised,
+                color: sel ? '#fff' : T.ink,
+                border: `1px solid ${sel ? col : T.hairline + '55'}`,
+                borderRadius: 14, cursor: 'pointer',
+                transition: 'all 200ms',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <span style={{ width: 8, height: 8, borderRadius: 2,
                   background: sel ? '#fff' : col }}/>
@@ -45,8 +51,12 @@ export default function Categories({ store, nav }) {
           );
         })}
       </div>
+    </>
+  );
 
-      <div style={{ padding: '4px 26px 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
+  return (
+    <MWPage scrollKey={`folders-${tab}`} header={header}>
+      <div style={{ padding: '8px 26px 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ width: 6, height: 6, borderRadius: 99, background: catColor }}/>
         <span style={{ fontSize: 12, color: T.muted, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: '"Geist Mono", monospace' }}>
           {CATEGORIES[tab].label} · {items.length} ITEMS

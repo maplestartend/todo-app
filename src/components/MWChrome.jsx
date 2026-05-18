@@ -122,7 +122,15 @@ export function MWTabBar({ active, onChange }) {
 // Module-scoped memory so scroll positions survive route remounts.
 const scrollMemory = new Map();
 
-export function MWPage({ children, withTabBar = true, scroll = true, scrollKey }) {
+export function MWPage({
+  children,
+  // `header`: content rendered ABOVE the scroll container and pinned in place
+  // (Home / Categories use this so the stats stay put while the list scrolls).
+  header,
+  withTabBar = true,
+  scroll = true,
+  scrollKey,
+}) {
   const T = useMW();
   const scrollRef = useRef(null);
 
@@ -144,6 +152,7 @@ export function MWPage({ children, withTabBar = true, scroll = true, scrollKey }
       width: '100%', height: '100%',
       background: T.paper, color: T.ink,
       position: 'relative', overflow: 'hidden',
+      display: 'flex', flexDirection: 'column',
       fontFamily: 'Huninn, "Noto Sans TC", sans-serif',
       transition: 'background 240ms, color 240ms',
     }}>
@@ -154,8 +163,20 @@ export function MWPage({ children, withTabBar = true, scroll = true, scrollKey }
           ? `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractal' baseFrequency='1.0' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`
           : `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractal' baseFrequency='1.0' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.4  0 0 0 0 0.25  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`,
       }} />
+      {header && (
+        <div style={{
+          position: 'relative', zIndex: 2,
+          flexShrink: 0,
+          // Solid bg so list content scrolling under it isn't visible
+          // through the noise overlay.
+          background: T.paper,
+          borderBottom: `1px solid ${T.hairline}33`,
+        }}>
+          {header}
+        </div>
+      )}
       <div ref={scrollRef} className={scroll ? 'mw-scroll' : undefined} style={{
-        position: 'relative', height: '100%', boxSizing: 'border-box',
+        position: 'relative', flex: 1, minHeight: 0, boxSizing: 'border-box',
         display: 'flex', flexDirection: 'column',
         overflow: scroll ? 'auto' : 'hidden',
         paddingBottom: withTabBar ? 'var(--mw-page-pad-bottom)' : 0,

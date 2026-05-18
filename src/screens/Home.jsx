@@ -132,8 +132,12 @@ export default function Home({ store, nav }) {
     return out;
   }, [decorated, filter]);
 
-  return (
-    <MWPage scrollKey="home">
+  const showChips =
+    todayCount > 0 || overdueCount > 0 ||
+    filter === 'today' || filter === 'overdue';
+
+  const header = (
+    <>
       <div style={{ paddingTop: 'var(--mw-nav-pad-top)', paddingLeft: 26, paddingRight: 26 }}>
         <div style={{ fontFamily: '"Geist Mono", monospace', fontSize: 11, letterSpacing: 2, color: T.muted }}>
           <GreetingDate now={now} />
@@ -153,9 +157,9 @@ export default function Home({ store, nav }) {
         <MWStat label="已完成" value={stats.done}   total={stats.total} active={filter==='done'}   onClick={()=>setFilter('done')}   color={T.green} />
       </div>
 
-      {(todayCount > 0 || overdueCount > 0 || filter === 'today' || filter === 'overdue') && (
+      {showChips && (
         <div style={{
-          padding: '4px 22px 0', display: 'flex', gap: 6,
+          padding: '4px 22px 12px', display: 'flex', gap: 6,
           overflowX: 'auto', scrollbarWidth: 'none',
         }}>
           <FocusChip
@@ -174,7 +178,11 @@ export default function Home({ store, nav }) {
           />
         </div>
       )}
+    </>
+  );
 
+  return (
+    <MWPage scrollKey="home" header={header}>
       <div style={{ padding: '8px 26px 6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 12, color: T.muted, fontFamily: '"Geist Mono", monospace', letterSpacing: 1 }}>
           {visible.length} ITEMS
@@ -208,7 +216,6 @@ export default function Home({ store, nav }) {
           />
         )}
       </div>
-
     </MWPage>
   );
 }
