@@ -13,7 +13,8 @@ export function MWNavBar({ title, eyebrow, leftIcon, onLeft, rightIcon, onRight,
   const T = useMW();
   return (
     <div style={{
-      paddingTop: 54, paddingLeft: 22, paddingRight: 22, paddingBottom: large ? 6 : 12,
+      paddingTop: 'var(--mw-nav-pad-top)', paddingLeft: 22, paddingRight: 22,
+      paddingBottom: large ? 6 : 12,
       display: 'flex', alignItems: 'flex-start', gap: 8,
       color: T.ink,
     }}>
@@ -55,7 +56,7 @@ export function MWTabBar({ active, onChange }) {
   return (
     <div style={{
       position: 'absolute', left: 0, right: 0, bottom: 0,
-      paddingBottom: 26, paddingTop: 8, paddingLeft: 8, paddingRight: 8,
+      paddingBottom: 'var(--mw-tab-pad-bottom)', paddingTop: 8, paddingLeft: 8, paddingRight: 8,
       background: T.paper + 'ee',
       backdropFilter: 'blur(12px)',
       WebkitBackdropFilter: 'blur(12px)',
@@ -106,7 +107,7 @@ export function MWPage({ children, withTabBar = true, scroll = true }) {
         position: 'relative', height: '100%',
         display: 'flex', flexDirection: 'column',
         overflow: scroll ? 'auto' : 'hidden',
-        paddingBottom: withTabBar ? 78 : 0,
+        paddingBottom: withTabBar ? 'var(--mw-page-pad-bottom)' : 0,
       }}>
         {children}
       </div>

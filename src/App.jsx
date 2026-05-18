@@ -13,6 +13,7 @@ import Settings from './screens/Settings.jsx';
 
 const PHONE_W = 402;
 const PHONE_H = 874;
+const MOBILE_MAX_WIDTH = 500;
 const TAB_SCREENS = ['home', 'folders', 'search', 'archive', 'settings'];
 
 function useDarkMode() {
@@ -25,7 +26,6 @@ function useDarkMode() {
   });
   useEffect(() => {
     try { localStorage.setItem('mw_dark', dark ? '1' : '0'); } catch {}
-    document.body.style.background = dark ? '#0e0a07' : '#2a221b';
   }, [dark]);
   return [dark, setDark];
 }
@@ -46,7 +46,19 @@ function useScaleToFit(targetW, targetH) {
   return scale;
 }
 
-function PhoneApp({ store, dark, setDark }) {
+function useIsMobileViewport() {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth <= MOBILE_MAX_WIDTH
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= MOBILE_MAX_WIDTH);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return isMobile;
+}
+
+function PhoneApp({ store, dark, setDark, mobile = false }) {
   const [route, setRoute] = useState({ screen: 'home', params: {} });
   const stack = useRef([{ screen: 'home', params: {} }]);
 
@@ -81,19 +93,27 @@ function PhoneApp({ store, dark, setDark }) {
     default:         body = <Home store={store} nav={nav} />;
   }
 
+  const inner = (
+    <div style={{ height: '100%', position: 'relative' }}>
+      <div
+        key={route.screen + JSON.stringify(route.params)}
+        style={{ height: '100%', position: 'relative', overflow: 'hidden' }}
+      >
+        <div style={{ animation: 'mwIn 220ms ease both', height: '100%' }}>
+          {body}
+        </div>
+      </div>
+      {isTab && <MWTabBar active={route.screen} onChange={onTab} />}
+    </div>
+  );
+
+  if (mobile) {
+    return <div style={{ width: '100%', height: '100%' }}>{inner}</div>;
+  }
+
   return (
     <IOSDevice width={PHONE_W} height={PHONE_H} dark={dark}>
-      <div style={{ height: '100%', position: 'relative' }}>
-        <div
-          key={route.screen + JSON.stringify(route.params)}
-          style={{ height: '100%', position: 'relative', overflow: 'hidden' }}
-        >
-          <div style={{ animation: 'mwIn 220ms ease both', height: '100%' }}>
-            {body}
-          </div>
-        </div>
-        {isTab && <MWTabBar active={route.screen} onChange={onTab} />}
-      </div>
+      {inner}
     </IOSDevice>
   );
 }
@@ -102,7 +122,29 @@ export default function App() {
   const [dark, setDark] = useDarkMode();
   const store = useStore();
   const theme = dark ? MW_DARK : MW_LIGHT;
+  const isMobile = useIsMobileViewport();
   const scale = useScaleToFit(PHONE_W, PHONE_H);
+
+  useEffect(() => {
+    document.body.classList.toggle('mw-mobile', isMobile);
+    document.body.style.background = isMobile
+      ? (dark ? '#1d160f' : '#faf3e3')
+      : (dark ? '#0e0a07' : '#2a221b');
+  }, [isMobile, dark]);
+
+  if (isMobile) {
+    return (
+      <MWThemeCtx.Provider value={theme}>
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: theme.paper,
+          overflow: 'hidden',
+        }}>
+          <PhoneApp store={store} dark={dark} setDark={setDark} mobile />
+        </div>
+      </MWThemeCtx.Provider>
+    );
+  }
 
   return (
     <MWThemeCtx.Provider value={theme}>

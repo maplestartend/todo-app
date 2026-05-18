@@ -114,7 +114,7 @@ export function MWFab({ onClick }) {
   const T = useMW();
   return (
     <button onClick={onClick} style={{
-      position: 'absolute', right: 22, bottom: 102, zIndex: 30,
+      position: 'absolute', right: 22, bottom: 'var(--mw-fab-bottom)', zIndex: 30,
       width: 58, height: 58, borderRadius: '50%',
       border: 'none', cursor: 'pointer',
       background: T.ink, color: T.paper,

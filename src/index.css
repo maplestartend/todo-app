@@ -2,6 +2,20 @@
   font-family: 'Huninn', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Chrome / safe-area defaults for desktop frame mode */
+  --mw-nav-pad-top: 54px;
+  --mw-tab-pad-bottom: 26px;
+  --mw-page-pad-bottom: 78px;
+  --mw-fab-bottom: 102px;
+}
+
+/* Mobile / standalone PWA mode — defer to OS safe areas */
+body.mw-mobile {
+  --mw-nav-pad-top: calc(env(safe-area-inset-top) + 16px);
+  --mw-tab-pad-bottom: calc(env(safe-area-inset-bottom) + 12px);
+  --mw-page-pad-bottom: calc(64px + env(safe-area-inset-bottom));
+  --mw-fab-bottom: calc(env(safe-area-inset-bottom) + 88px);
 }
 
 html, body, #root {
@@ -14,6 +28,18 @@ body {
   background: #2a221b;
   min-height: 100vh;
   overflow: auto;
+}
+
+body.mw-mobile {
+  /* When installed as a standalone PWA the background of the body shows in the
+     safe-area regions (notch / home indicator) — match the app paper. */
+  background: #faf3e3;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  body.mw-mobile { background: #1d160f; }
 }
 
 button {
@@ -55,3 +81,7 @@ button {
   background-clip: padding-box;
   border: 2px solid transparent;
 }
+
+/* Hide scrollbar entirely in mobile / standalone (touch handles it) */
+body.mw-mobile .mw-scroll { scrollbar-width: none; }
+body.mw-mobile .mw-scroll::-webkit-scrollbar { width: 0; height: 0; }

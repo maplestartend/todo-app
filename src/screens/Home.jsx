@@ -46,7 +46,7 @@ export default function Home({ store, nav }) {
 
   return (
     <MWPage>
-      <div style={{ padding: '54px 26px 0' }}>
+      <div style={{ paddingTop: 'var(--mw-nav-pad-top)', paddingLeft: 26, paddingRight: 26 }}>
         <div style={{ fontFamily: '"Geist Mono", monospace', fontSize: 11, letterSpacing: 2, color: T.muted }}>
           APR · 28 · TUE
         </div>

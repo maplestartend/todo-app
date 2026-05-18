@@ -1,0 +1,17 @@
+{
+  "name": "Minimal Warm",
+  "short_name": "待辦",
+  "description": "Minimal warm todo",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf3e3",
+  "theme_color": "#faf3e3",
+  "orientation": "portrait",
+  "lang": "zh-Hant",
+  "icons": [
+    { "src": "/icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" }
+  ]
+}
