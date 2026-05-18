@@ -3,12 +3,13 @@ import { useMW } from '../theme.js';
 import { CATEGORIES } from '../data.js';
 import { MWPage, MWNavBar } from '../components/MWChrome.jsx';
 import { MWRow, MWEmpty } from '../components/MWPrimitives.jsx';
+import { getCategoryColor } from '../utils/categoryColor.js';
 
 export default function Categories({ store, nav }) {
   const T = useMW();
   const [tab, setTab] = useState('work');
   const items = store.todos.filter(t => t.cat === tab);
-  const catColor = tab === 'work' ? T.workCat : tab === 'life' ? T.lifeCat : T.studyCat;
+  const catColor = getCategoryColor(tab, T);
 
   return (
     <MWPage scrollKey={`folders-${tab}`}>
@@ -16,7 +17,7 @@ export default function Categories({ store, nav }) {
 
       <div style={{ padding: '4px 22px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         {Object.entries(CATEGORIES).map(([k, v]) => {
-          const col = k === 'work' ? T.workCat : k === 'life' ? T.lifeCat : T.studyCat;
+          const col = getCategoryColor(k, T);
           const cnt = store.todos.filter(t => t.cat === k).length;
           const undone = store.todos.filter(t => t.cat === k && t.state !== 'done').length;
           const sel = tab === k;

@@ -8,15 +8,21 @@ function MWStat({ label, value, total, active, onClick, color }) {
   const pct = total > 0 ? Math.min(1, value / total) : 0;
   const r = 22, c = 2 * Math.PI * r;
   return (
-    <button onClick={onClick} style={{
-      flex: 1, padding: '14px 10px 12px',
-      background: active ? T.paperRaised : 'transparent',
-      border: `1px solid ${active ? color + '44' : T.hairline + '55'}`,
-      borderRadius: 14, cursor: 'pointer',
-      transition: 'all 200ms',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-      color: T.ink,
-    }}>
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={`${label} ${value}`}
+      style={{
+        flex: 1, padding: '14px 10px 12px',
+        background: active ? color + '14' : 'transparent',
+        border: `1.5px solid ${active ? color : T.hairline + '55'}`,
+        borderRadius: 14, cursor: 'pointer',
+        transition: 'background 200ms, border-color 200ms, transform 200ms',
+        transform: active ? 'translateY(-1px)' : 'translateY(0)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+        color: T.ink, minHeight: 48,
+      }}
+    >
       <div style={{ position: 'relative', width: 56, height: 56 }}>
         <svg width="56" height="56" viewBox="0 0 56 56" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
           <circle cx="28" cy="28" r={r} stroke={T.muted} strokeOpacity="0.25" strokeWidth="2" fill="none" />
@@ -29,7 +35,12 @@ function MWStat({ label, value, total, active, onClick, color }) {
           fontFamily: 'Caveat, cursive', fontSize: 26, color, fontWeight: 600,
         }}>{value}</div>
       </div>
-      <div style={{ fontSize: 12, color: T.muted, letterSpacing: 1 }}>{label}</div>
+      <div style={{
+        fontSize: 12, letterSpacing: 1,
+        color: active ? color : T.muted,
+        fontWeight: active ? 600 : 400,
+        transition: 'color 200ms',
+      }}>{label}</div>
     </button>
   );
 }

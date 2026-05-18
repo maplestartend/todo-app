@@ -94,13 +94,18 @@ function PhoneApp({ store, dark, setDark, mobile = false }) {
     default:         body = <Home store={store} nav={nav} />;
   }
 
+  const isPush = route.screen === 'detail' || route.screen === 'edit';
+  const anim = isPush
+    ? 'mwPush 320ms cubic-bezier(0.32, 0.72, 0, 1) both'
+    : 'mwIn 260ms cubic-bezier(0.22, 0.61, 0.36, 1) both';
+
   const inner = (
     <div style={{ height: '100%', position: 'relative' }}>
       <div
         key={route.screen + JSON.stringify(route.params)}
         style={{ height: '100%', position: 'relative', overflow: 'hidden' }}
       >
-        <div style={{ animation: 'mwIn 220ms ease both', height: '100%' }}>
+        <div style={{ animation: anim, height: '100%' }}>
           {body}
         </div>
       </div>

@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
 import { useMW } from '../theme.js';
 import { CATEGORIES, PRIORITY } from '../data.js';
+import { getCategoryColor, STATE_LABEL } from '../utils/categoryColor.js';
+import { radius, motion, touch } from '../designSystem/tokens.js';
 import MWIcon from './MWIcon.jsx';
-
-const STATE_LABEL = { todo: '未開始', doing: '進行中', done: '已完成' };
 
 export function MWCheck({ state, onClick, size = 24, label }) {
   const T = useMW();
@@ -39,9 +39,10 @@ export function MWCheck({ state, onClick, size = 24, label }) {
           </g>
         )}
         {checked && (
-          <path d="M9 16.5 L 14 21 L 24 10" fill="none" stroke={T.paper}
-                strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"
-                style={{ animation: 'mwDraw 320ms ease-out' }} />
+          <g style={{ animation: 'mwCheckPop 340ms cubic-bezier(0.32, 0.72, 0, 1)', transformOrigin: '16px 16px' }}>
+            <path d="M9 16.5 L 14 21 L 24 10" fill="none" stroke={T.paper}
+                  strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+          </g>
         )}
       </svg>
     </button>
@@ -72,7 +73,7 @@ export function MWRow({ todo, onToggle, onOpen }) {
   const T = useMW();
   const cat = CATEGORIES[todo.cat];
   const prio = PRIORITY[todo.prio];
-  const catColor = todo.cat === 'work' ? T.workCat : todo.cat === 'life' ? T.lifeCat : T.studyCat;
+  const catColor = getCategoryColor(todo.cat, T);
   const isDone = todo.state === 'done';
 
   // Track touch start so horizontal pan / long press does not fire onOpen.

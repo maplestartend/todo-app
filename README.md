@@ -37,6 +37,13 @@ npm run preview  # 預覽打包結果
 - 響應式：寬螢幕顯示模擬的 iPhone 外框，窄螢幕（≤500px）切換為全螢幕模式
 - PWA shell：`viewport-fit=cover`、iOS standalone 偵測、safe-area 變數
 
+## Design system
+
+- [src/designSystem/tokens.js](src/designSystem/tokens.js)：spacing / radius / shadow / typography / motion 集中管理
+- [src/utils/categoryColor.js](src/utils/categoryColor.js)：`getCategoryColor()` 與 `STATE_LABEL`，取代原本散落 5 處的三元式
+- 動效：tab 切換用 `mwIn` 細微淡入；push（Detail / Edit）用 `mwPush` 配 iOS spring 曲線；checkbox 完成有 `mwCheckPop` 彈跳
+- 對比度：muted 文字色已調暗至 WCAG AA 4.5:1 標準
+
 ## 行動 / 無障礙
 
 - 觸控目標：navbar icon、tab bar 按鈕、checkbox 皆 ≥ 44×44pt

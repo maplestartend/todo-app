@@ -6,7 +6,8 @@ export const MW_LIGHT = {
   paperSunk: '#f0e6cf',
   ink: '#2d231a',
   inkSoft: '#5a4736',
-  muted: '#9c8b73',
+  // Was #9c8b73 (~3.2:1 vs paper). Darkened to meet WCAG AA 4.5:1.
+  muted: '#7a6a52',
   hairline: '#cdb997',
   accent: '#c46a4a',
   accentSoft: '#f0bca0',
@@ -26,7 +27,7 @@ export const MW_DARK = {
   paperSunk: '#15100c',
   ink: '#f5e9d2',
   inkSoft: '#c2b094',
-  muted: '#8a7a64',
+  muted: '#a89476',
   hairline: '#3d3024',
   accent: '#e88a65',
   accentSoft: '#5a3122',

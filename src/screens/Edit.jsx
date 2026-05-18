@@ -3,6 +3,7 @@ import { useMW } from '../theme.js';
 import { CATEGORIES, PRIORITY } from '../data.js';
 import { MWPage, MWNavBar } from '../components/MWChrome.jsx';
 import { SectionHead, inputBase } from '../components/MWPrimitives.jsx';
+import { getCategoryColor } from '../utils/categoryColor.js';
 
 export default function Edit({ store, nav, params }) {
   const T = useMW();
@@ -80,7 +81,7 @@ export default function Edit({ store, nav, params }) {
       </div>
       <div style={{ padding: '0 22px', display: 'flex', gap: 8 }}>
         {Object.entries(CATEGORIES).map(([k, v]) => {
-          const col = k === 'work' ? T.workCat : k === 'life' ? T.lifeCat : T.studyCat;
+          const col = getCategoryColor(k, T);
           const sel = cat === k;
           return (
             <button key={k} onClick={() => setCat(k)} style={{

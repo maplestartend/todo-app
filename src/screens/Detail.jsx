@@ -4,6 +4,7 @@ import { CATEGORIES, PRIORITY } from '../data.js';
 import { MWPage, MWNavBar } from '../components/MWChrome.jsx';
 import { MWCheck, MWStrike, SectionHead } from '../components/MWPrimitives.jsx';
 import MWIcon from '../components/MWIcon.jsx';
+import { getCategoryColor, STATE_LABEL } from '../utils/categoryColor.js';
 
 export default function Detail({ store, nav, params }) {
   const T = useMW();
@@ -21,7 +22,7 @@ export default function Detail({ store, nav, params }) {
 
   const cat = CATEGORIES[todo.cat];
   const prio = PRIORITY[todo.prio];
-  const catColor = todo.cat === 'work' ? T.workCat : todo.cat === 'life' ? T.lifeCat : T.studyCat;
+  const catColor = getCategoryColor(todo.cat, T);
   const subDone = subtasks.filter(s => s.done).length;
   const pct = subtasks.length
     ? subDone / subtasks.length
@@ -50,7 +51,7 @@ export default function Detail({ store, nav, params }) {
             padding: '3px 10px', borderRadius: 99,
             background: prio.color + '22', color: prio.color,
             fontSize: 12, letterSpacing: 0.5,
-          }}>{todo.prio === 'high' ? '高' : todo.prio === 'mid' ? '中' : '低'}優先</span>
+          }}>{prio.label}優先</span>
           <div style={{ flex: 1 }} />
           <span style={{ fontFamily: 'Caveat, cursive', fontSize: 18, color: T.muted }}>{todo.time}</span>
         </div>
@@ -75,7 +76,7 @@ export default function Detail({ store, nav, params }) {
               fontFamily: 'Huninn, sans-serif',
               transition: 'all 180ms',
             }}>
-              {s === 'todo' ? '未開始' : s === 'doing' ? '進行中' : '已完成'}
+              {STATE_LABEL[s]}
             </button>
           ))}
         </div>
