@@ -3,6 +3,7 @@ import { MWThemeCtx, MW_LIGHT, MW_DARK } from './theme.js';
 import { useStore } from './useStore.js';
 import IOSDevice from './components/IOSDevice.jsx';
 import { MWTabBar } from './components/MWChrome.jsx';
+import { MWFab } from './components/MWPrimitives.jsx';
 import Home from './screens/Home.jsx';
 import Detail from './screens/Detail.jsx';
 import Edit from './screens/Edit.jsx';
@@ -103,6 +104,9 @@ function PhoneApp({ store, dark, setDark, mobile = false }) {
           {body}
         </div>
       </div>
+      {route.screen === 'home' && (
+        <MWFab onClick={() => nav.go('edit', { mode: 'new' })} />
+      )}
       {isTab && <MWTabBar active={route.screen} onChange={onTab} />}
     </div>
   );

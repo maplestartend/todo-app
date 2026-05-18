@@ -139,7 +139,7 @@ export default function Detail({ store, nav, params }) {
             width: '100%', minHeight: 84, boxSizing: 'border-box',
             background: T.paperRaised, border: `1px solid ${T.hairline}55`,
             borderRadius: 12, padding: 14, color: T.ink, outline: 'none',
-            fontFamily: 'Huninn, sans-serif', fontSize: 14, lineHeight: 1.5,
+            fontFamily: 'Huninn, sans-serif', fontSize: 16, lineHeight: 1.5,
             resize: 'none',
           }}/>
       </div>

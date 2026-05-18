@@ -100,7 +100,7 @@ export default function Edit({ store, nav, params }) {
       </div>
       <div style={{ padding: '0 22px' }}>
         <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="加上一些細節..."
-          style={{ ...inputBase(T), minHeight: 80, resize: 'none', fontSize: 14, lineHeight: 1.5 }}/>
+          style={{ ...inputBase(T), minHeight: 80, resize: 'none', fontSize: 16, lineHeight: 1.5 }}/>
       </div>
 
       <div style={{ flex: 1 }}/>

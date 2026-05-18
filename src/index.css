@@ -7,7 +7,10 @@
   --mw-nav-pad-top: 54px;
   --mw-tab-pad-bottom: 26px;
   --mw-page-pad-bottom: 78px;
-  --mw-fab-bottom: 102px;
+  /* FAB is rendered as sibling of the tab bar in viewport-sized container,
+     so position relative to viewport bottom: tab bar height (~43 + tab-pad)
+     plus a 24px gap above. */
+  --mw-fab-bottom: calc(var(--mw-tab-pad-bottom) + 70px);
 }
 
 /* Mobile / standalone PWA mode — defer to OS safe areas */
@@ -15,7 +18,7 @@ body.mw-mobile {
   --mw-nav-pad-top: calc(env(safe-area-inset-top) + 16px);
   --mw-tab-pad-bottom: calc(env(safe-area-inset-bottom) + 12px);
   --mw-page-pad-bottom: calc(64px + env(safe-area-inset-bottom));
-  --mw-fab-bottom: calc(env(safe-area-inset-bottom) + 88px);
+  /* --mw-fab-bottom inherits from :root and re-evaluates with new --mw-tab-pad-bottom */
 }
 
 html, body, #root {
@@ -62,6 +65,8 @@ button {
 .mw-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(128, 128, 128, 0.55) transparent;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 .mw-scroll::-webkit-scrollbar {
   width: 8px;

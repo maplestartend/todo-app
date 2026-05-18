@@ -30,7 +30,7 @@ export default function Search({ store, nav }) {
             placeholder="搜尋任務、備註、分類..."
             style={{
               flex: 1, border: 'none', background: 'transparent', outline: 'none',
-              fontFamily: 'Huninn, sans-serif', fontSize: 15, color: T.ink,
+              fontFamily: 'Huninn, sans-serif', fontSize: 16, color: T.ink,
             }}/>
           {q && (
             <button onClick={() => setQ('')} style={{

@@ -181,5 +181,5 @@ export const inputBase = (T) => ({
   width: '100%', boxSizing: 'border-box',
   background: T.paperRaised, border: `1px solid ${T.hairline}55`,
   borderRadius: 12, padding: 12, color: T.ink, outline: 'none',
-  fontFamily: 'Huninn, sans-serif', fontSize: 15,
+  fontFamily: 'Huninn, sans-serif', fontSize: 16,
 });

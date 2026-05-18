@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMW } from '../theme.js';
 import { MWPage } from '../components/MWChrome.jsx';
-import { MWRow, MWFab, MWEmpty } from '../components/MWPrimitives.jsx';
+import { MWRow, MWEmpty } from '../components/MWPrimitives.jsx';
 
 function MWStat({ label, value, total, active, onClick, color }) {
   const T = useMW();
@@ -79,7 +79,6 @@ export default function Home({ store, nav }) {
         )}
       </div>
 
-      <MWFab onClick={() => nav.go('edit', { mode: 'new' })} />
     </MWPage>
   );
 }
