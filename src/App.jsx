@@ -104,7 +104,7 @@ function PhoneApp({ store, dark, setDark, mobile = false }) {
           {body}
         </div>
       </div>
-      {route.screen === 'home' && (
+      {(route.screen === 'home' || route.screen === 'folders') && (
         <MWFab onClick={() => nav.go('edit', { mode: 'new' })} />
       )}
       {isTab && <MWTabBar active={route.screen} onChange={onTab} />}

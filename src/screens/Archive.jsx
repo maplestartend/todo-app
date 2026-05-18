@@ -43,7 +43,7 @@ export default function Archive({ store, nav }) {
         </div>
       </div>
 
-      <div className="mw-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+      <div>
         {groups.map(g => (
           <div key={g.label}>
             <div style={{ padding: '8px 26px 6px', display: 'flex', alignItems: 'center', gap: 8 }}>

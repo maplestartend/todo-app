@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMW } from '../theme.js';
 import { CATEGORIES } from '../data.js';
 import { MWPage, MWNavBar } from '../components/MWChrome.jsx';
-import { MWRow, MWFab, MWEmpty } from '../components/MWPrimitives.jsx';
+import { MWRow, MWEmpty } from '../components/MWPrimitives.jsx';
 
 export default function Categories({ store, nav }) {
   const T = useMW();
@@ -52,14 +52,12 @@ export default function Categories({ store, nav }) {
         </span>
       </div>
 
-      <div className="mw-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+      <div>
         {items.map(t => (
           <MWRow key={t.id} todo={t} onToggle={() => store.cycleState(t.id)} onOpen={() => nav.go('detail', { id: t.id })} />
         ))}
         {items.length === 0 && <MWEmpty caption="這個分類還是空的" sub="按 + 新增第一件事" />}
       </div>
-
-      <MWFab onClick={() => nav.go('edit', { mode: 'new' })} />
     </MWPage>
   );
 }

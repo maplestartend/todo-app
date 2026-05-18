@@ -70,7 +70,7 @@ export default function Home({ store, nav }) {
         </div>
       </div>
 
-      <div className="mw-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+      <div>
         {filtered.map(t => (
           <MWRow key={t.id} todo={t} onToggle={() => cycleState(t.id)} onOpen={() => nav.go('detail', { id: t.id })} />
         ))}

@@ -80,7 +80,7 @@ export default function Search({ store, nav }) {
       )}
 
       {q.trim() && (
-        <div className="mw-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <div>
           <div style={{ padding: '4px 26px 8px' }}>
             <div style={{ fontSize: 12, color: T.muted, fontFamily: '"Geist Mono", monospace', letterSpacing: 1 }}>
               {results.length} RESULTS · "{q}"
