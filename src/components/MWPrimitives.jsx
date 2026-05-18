@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { useMW } from '../theme.js';
 import { CATEGORIES, PRIORITY } from '../data.js';
 import { getCategoryColor, STATE_LABEL } from '../utils/categoryColor.js';
+import { isOverdue, isDueToday } from '../utils/dueDate.js';
 import { radius, motion, touch } from '../designSystem/tokens.js';
 import MWIcon from './MWIcon.jsx';
 
@@ -144,6 +145,25 @@ export function MWRow({ todo, onToggle, onOpen }) {
               padding: '1px 7px', borderRadius: 99,
               border: `1px solid ${T.accent}66`,
             }}>進行中</span>
+          )}
+          {!isDone && isOverdue(todo) && (
+            <span style={{
+              fontSize: 10, color: T.accent, fontWeight: 600,
+              padding: '1px 7px', borderRadius: 99,
+              background: T.accent + '18',
+              fontFamily: '"Geist Mono", monospace', letterSpacing: 0.5,
+            }}>OVERDUE</span>
+          )}
+          {!isDone && !isOverdue(todo) && isDueToday(todo) && (
+            <span style={{
+              fontSize: 10, color: T.green, fontWeight: 600,
+              padding: '1px 7px', borderRadius: 99,
+              background: T.green + '18',
+              fontFamily: '"Geist Mono", monospace', letterSpacing: 0.5,
+            }}>TODAY</span>
+          )}
+          {todo.repeat && todo.repeat !== 'none' && (
+            <MWIcon name="archive" size={11} stroke={T.muted} sw={1.6} />
           )}
         </div>
       </div>

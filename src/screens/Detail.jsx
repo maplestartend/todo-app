@@ -1,10 +1,14 @@
 import React from 'react';
 import { useMW } from '../theme.js';
-import { CATEGORIES, PRIORITY } from '../data.js';
+import { CATEGORIES, PRIORITY, REPEAT_OPTIONS, REMIND_OPTIONS } from '../data.js';
 import { MWPage, MWNavBar } from '../components/MWChrome.jsx';
 import { MWCheck, MWStrike, SectionHead } from '../components/MWPrimitives.jsx';
 import MWIcon from '../components/MWIcon.jsx';
 import { getCategoryColor, STATE_LABEL } from '../utils/categoryColor.js';
+import { formatDueLabel, parseDue, formatRelative, isOverdue } from '../utils/dueDate.js';
+
+const REPEAT_LABEL = Object.fromEntries(REPEAT_OPTIONS.map(o => [o.value, o.label]));
+const REMIND_LABEL = new Map(REMIND_OPTIONS.map(o => [o.value, o.label]));
 
 export default function Detail({ store, nav, params }) {
   const T = useMW();
@@ -113,22 +117,56 @@ export default function Detail({ store, nav, params }) {
       </div>
 
       <div style={{ padding: '20px 26px 6px' }}>
-        <SectionHead icon="bell" title="提醒" />
+        <SectionHead icon="bell" title="截止與提醒" />
       </div>
       <div style={{ padding: '0 22px' }}>
-        <div style={{
-          padding: '12px 14px',
-          background: T.paperRaised, borderRadius: 12,
-          border: `1px solid ${T.hairline}55`,
-          display: 'flex', alignItems: 'center', gap: 10,
-        }}>
+        <button
+          onClick={() => nav.go('edit', { mode: 'edit', id: todo.id })}
+          style={{
+            width: '100%', textAlign: 'left',
+            padding: '12px 14px',
+            background: T.paperRaised, borderRadius: 12,
+            border: `1px solid ${T.hairline}55`,
+            display: 'flex', alignItems: 'center', gap: 10,
+            cursor: 'pointer', color: T.ink,
+            fontFamily: 'Huninn, sans-serif',
+          }}
+        >
           <MWIcon name="calendar" size={20} stroke={T.muted} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14 }}>2026.04.28 · {todo.time}</div>
-            <div style={{ fontSize: 11, color: T.muted, fontFamily: '"Geist Mono", monospace' }}>30 分鐘前提醒</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {todo.dueDate ? (
+              <>
+                <div style={{ fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span>{formatDueLabel(todo)}</span>
+                  {(() => {
+                    const due = parseDue(todo);
+                    if (!due || todo.state === 'done') return null;
+                    const overdue = isOverdue(todo);
+                    return (
+                      <span style={{
+                        fontSize: 11, padding: '1px 7px', borderRadius: 99,
+                        background: overdue ? T.accent + '22' : T.green + '22',
+                        color: overdue ? T.accent : T.green,
+                        fontFamily: '"Geist Mono", monospace', letterSpacing: 0.5,
+                      }}>{formatRelative(due)}</span>
+                    );
+                  })()}
+                </div>
+                <div style={{ fontSize: 11, color: T.muted, fontFamily: '"Geist Mono", monospace', marginTop: 2 }}>
+                  {todo.remindBefore == null
+                    ? '未設定提醒'
+                    : `提醒 · ${REMIND_LABEL.get(todo.remindBefore) || `${todo.remindBefore} 分前`}`}
+                  {todo.repeat && todo.repeat !== 'none' && (
+                    <> · 重複 · {REPEAT_LABEL[todo.repeat]}</>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 14, color: T.muted }}>未設定截止日期</div>
+            )}
           </div>
           <span style={{ fontFamily: 'Caveat, cursive', fontSize: 16, color: T.accent }}>edit</span>
-        </div>
+        </button>
       </div>
 
       <div style={{ padding: '20px 26px 6px' }}>

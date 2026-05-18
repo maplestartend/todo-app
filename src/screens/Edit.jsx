@@ -1,9 +1,39 @@
 import React, { useState } from 'react';
 import { useMW } from '../theme.js';
-import { CATEGORIES, PRIORITY } from '../data.js';
+import { CATEGORIES, PRIORITY, REPEAT_OPTIONS, REMIND_OPTIONS } from '../data.js';
 import { MWPage, MWNavBar } from '../components/MWChrome.jsx';
 import { SectionHead, inputBase } from '../components/MWPrimitives.jsx';
 import { getCategoryColor } from '../utils/categoryColor.js';
+
+function Segmented({ options, value, onChange, getKey, getLabel, color }) {
+  const T = useMW();
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {options.map(opt => {
+        const k = getKey(opt);
+        const sel = k === value || (k == null && value == null);
+        return (
+          <button
+            key={String(k)}
+            onClick={() => onChange(k)}
+            aria-pressed={sel}
+            style={{
+              padding: '8px 14px', minHeight: 36,
+              borderRadius: 99,
+              background: sel ? (color || T.ink) : 'transparent',
+              color: sel ? T.paper : T.ink,
+              border: `1px solid ${sel ? (color || T.ink) : T.hairline + '88'}`,
+              fontSize: 13, fontFamily: 'Huninn, sans-serif',
+              cursor: 'pointer', transition: 'all 160ms',
+            }}
+          >
+            {getLabel(opt)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Edit({ store, nav, params }) {
   const T = useMW();
@@ -12,8 +42,12 @@ export default function Edit({ store, nav, params }) {
   const [title, setTitle] = useState(existing?.title || '');
   const [cat, setCat] = useState(existing?.cat || 'work');
   const [prio, setPrio] = useState(existing?.prio || 'mid');
-  const [time, setTime] = useState(existing?.time || '');
-  const [date, setDate] = useState(existing?.date || '');
+  const [dueDate, setDueDate] = useState(existing?.dueDate || '');
+  const [dueTime, setDueTime] = useState(existing?.dueTime || '');
+  const [repeat, setRepeat] = useState(existing?.repeat || 'none');
+  const [remindBefore, setRemindBefore] = useState(
+    existing && 'remindBefore' in existing ? existing.remindBefore : null
+  );
   const [note, setNote] = useState(existing?.note || '');
 
   const canSave = title.trim().length > 0;
@@ -22,9 +56,13 @@ export default function Edit({ store, nav, params }) {
     const patch = {
       title: title.trim(),
       cat, prio,
-      time: time || '今天',
-      date: date.trim(),
-      note: note,
+      // Keep legacy free-text `time` in sync with dueTime for backward compat.
+      time: dueTime || existing?.time || '今天',
+      dueDate, dueTime, repeat,
+      remindBefore: remindBefore ?? null,
+      note,
+      // Re-arm reminder when due/remind changes.
+      lastNotifiedAt: null,
     };
     if (isEdit) {
       store.update(existing.id, patch);
@@ -84,8 +122,8 @@ export default function Edit({ store, nav, params }) {
           const col = getCategoryColor(k, T);
           const sel = cat === k;
           return (
-            <button key={k} onClick={() => setCat(k)} style={{
-              flex: 1, padding: '12px 10px',
+            <button key={k} onClick={() => setCat(k)} aria-pressed={sel} style={{
+              flex: 1, padding: '12px 10px', minHeight: 44,
               background: sel ? col : 'transparent',
               color: sel ? '#fff' : T.ink,
               border: `1px solid ${sel ? col : T.hairline + '88'}`,
@@ -103,8 +141,8 @@ export default function Edit({ store, nav, params }) {
         {Object.entries(PRIORITY).map(([k, v]) => {
           const sel = prio === k;
           return (
-            <button key={k} onClick={() => setPrio(k)} style={{
-              flex: 1, padding: '12px 10px',
+            <button key={k} onClick={() => setPrio(k)} aria-pressed={sel} style={{
+              flex: 1, padding: '12px 10px', minHeight: 44,
               background: sel ? v.color : 'transparent',
               color: sel ? '#fff' : T.ink,
               border: `1px solid ${sel ? v.color : T.hairline + '88'}`,
@@ -116,11 +154,49 @@ export default function Edit({ store, nav, params }) {
       </div>
 
       <div style={{ padding: '20px 26px 6px' }}>
+        <SectionHead icon="calendar" title="截止" />
+      </div>
+      <div style={{ padding: '0 22px', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 8 }}>
+        <input
+          type="date" value={dueDate}
+          onChange={e => setDueDate(e.target.value)}
+          aria-label="截止日期"
+          style={inputBase(T)}
+        />
+        <input
+          type="time" value={dueTime}
+          onChange={e => setDueTime(e.target.value)}
+          aria-label="截止時間"
+          style={inputBase(T)}
+        />
+      </div>
+
+      <div style={{ padding: '20px 26px 6px' }}>
         <SectionHead icon="bell" title="提醒" />
       </div>
-      <div style={{ padding: '0 22px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        <input value={date} onChange={e => setDate(e.target.value)} placeholder="日期" style={inputBase(T)} />
-        <input value={time} onChange={e => setTime(e.target.value)} placeholder="時間" style={inputBase(T)} />
+      <div style={{ padding: '0 22px' }}>
+        <Segmented
+          options={REMIND_OPTIONS}
+          value={remindBefore}
+          onChange={setRemindBefore}
+          getKey={(o) => o.value}
+          getLabel={(o) => o.label}
+          color={T.accent}
+        />
+      </div>
+
+      <div style={{ padding: '20px 26px 6px' }}>
+        <SectionHead icon="archive" title="重複" />
+      </div>
+      <div style={{ padding: '0 22px' }}>
+        <Segmented
+          options={REPEAT_OPTIONS}
+          value={repeat}
+          onChange={setRepeat}
+          getKey={(o) => o.value}
+          getLabel={(o) => o.label}
+          color={T.accent}
+        />
       </div>
 
       <div style={{ padding: '20px 26px 6px' }}>
@@ -131,7 +207,7 @@ export default function Edit({ store, nav, params }) {
           style={{ ...inputBase(T), minHeight: 80, resize: 'none', fontSize: 16, lineHeight: 1.5 }}/>
       </div>
 
-      <div style={{ flex: 1 }}/>
+      <div style={{ flex: 1, minHeight: 12 }}/>
       {isEdit && (
         <div style={{ padding: '8px 22px 24px' }}>
           <button onClick={() => { store.remove(existing.id); nav.back(); }} style={{

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MWThemeCtx, MW_LIGHT, MW_DARK } from './theme.js';
 import { useStore } from './useStore.js';
+import { useReminders } from './hooks/useReminders.js';
 import IOSDevice from './components/IOSDevice.jsx';
 import { MWTabBar } from './components/MWChrome.jsx';
 import { MWFab } from './components/MWPrimitives.jsx';
@@ -31,6 +32,16 @@ function useDarkMode() {
   return [dark, setDark];
 }
 
+function useNotificationsEnabled() {
+  const [enabled, setEnabled] = useState(() => {
+    try { return localStorage.getItem('mw_notify') === '1'; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('mw_notify', enabled ? '1' : '0'); } catch {}
+  }, [enabled]);
+  return [enabled, setEnabled];
+}
+
 function useScaleToFit(targetW, targetH) {
   const [scale, setScale] = useState(1);
   useEffect(() => {
@@ -59,7 +70,7 @@ function useIsMobileViewport() {
   return isMobile;
 }
 
-function PhoneApp({ store, dark, setDark, mobile = false }) {
+function PhoneApp({ store, dark, setDark, notify, setNotify, mobile = false }) {
   const [route, setRoute] = useState({ screen: 'home', params: {} });
   const stack = useRef([{ screen: 'home', params: {} }]);
 
@@ -90,7 +101,7 @@ function PhoneApp({ store, dark, setDark, mobile = false }) {
     case 'folders':  body = <Categories store={store} nav={nav} />; break;
     case 'search':   body = <Search store={store} nav={nav} />; break;
     case 'archive':  body = <Archive store={store} nav={nav} />; break;
-    case 'settings': body = <Settings dark={dark} setDark={setDark} store={store} />; break;
+    case 'settings': body = <Settings dark={dark} setDark={setDark} store={store} notify={notify} setNotify={setNotify} />; break;
     default:         body = <Home store={store} nav={nav} />;
   }
 
@@ -129,7 +140,9 @@ function PhoneApp({ store, dark, setDark, mobile = false }) {
 
 export default function App() {
   const [dark, setDark] = useDarkMode();
+  const [notify, setNotify] = useNotificationsEnabled();
   const store = useStore();
+  useReminders(store, notify);
   const theme = dark ? MW_DARK : MW_LIGHT;
   const isMobile = useIsMobileViewport();
   const scale = useScaleToFit(PHONE_W, PHONE_H);
@@ -149,7 +162,7 @@ export default function App() {
           background: theme.paper,
           overflow: 'hidden',
         }}>
-          <PhoneApp store={store} dark={dark} setDark={setDark} mobile />
+          <PhoneApp store={store} dark={dark} setDark={setDark} notify={notify} setNotify={setNotify} mobile />
         </div>
       </MWThemeCtx.Provider>
     );
@@ -176,7 +189,7 @@ export default function App() {
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
           }}>
-            <PhoneApp store={store} dark={dark} setDark={setDark} />
+            <PhoneApp store={store} dark={dark} setDark={setDark} notify={notify} setNotify={setNotify} />
           </div>
         </div>
       </div>

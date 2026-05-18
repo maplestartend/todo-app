@@ -28,6 +28,16 @@ npm run preview  # 預覽打包結果
 - Home / 分類頁右下 + → 新增表單
 - 底部 5 個分頁可互跳，切換後再回來會回到原本的捲動位置
 - 點 checkbox 切換 未開始 → 進行中 → 已完成
+- 列表 row 自動顯示 `OVERDUE` / `TODAY` 徽章與重複圖示
+
+## 截止日期 / 提醒 / 重複任務
+
+- Edit 頁面用 HTML5 date / time picker 直接設定截止日（系統原生輸入）
+- 提醒：關閉 / 準時 / 30 分前 / 1 小時前 / 1 天前 五段選項
+- 重複：一次 / 每日 / 每週 / 每月；標記完成時自動 spawn 下一輪
+- 通知層：[src/hooks/useReminders.js](src/hooks/useReminders.js) 每分鐘輪詢一次，截止前在前景觸發 `Notification`；> 24 小時過期的提醒會直接跳過避免騷擾
+- 通知開關在「設定 → 通知 → 提醒通知」，第一次開啟會彈出系統權限對話框
+- iPhone 上需以「加入主畫面」standalone 模式才能用 Web Notification（iOS 16.4+）
 
 ## 技術
 

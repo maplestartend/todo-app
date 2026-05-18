@@ -3,6 +3,7 @@ import { useMW } from '../theme.js';
 import { MWPage, MWNavBar } from '../components/MWChrome.jsx';
 import { MWSwitch } from '../components/MWPrimitives.jsx';
 import MWIcon from '../components/MWIcon.jsx';
+import { requestNotificationPermission, notificationStatus } from '../hooks/useReminders.js';
 
 function SettingsGroup({ label, children }) {
   const T = useMW();
@@ -36,7 +37,7 @@ function SettingsRow({ icon, label, right }) {
   );
 }
 
-export default function Settings({ dark, setDark, store }) {
+export default function Settings({ dark, setDark, store, notify, setNotify }) {
   const T = useMW();
   const s = store?.stats || { total: 0, done: 0, doing: 0 };
   const stats = [
@@ -44,6 +45,13 @@ export default function Settings({ dark, setDark, store }) {
     { label: '已完成', value: s.done },
     { label: '進行中', value: s.doing },
   ];
+  const permStatus = notificationStatus();
+  const toggleNotify = async (on) => {
+    if (!on) { setNotify(false); return; }
+    const perm = await requestNotificationPermission();
+    if (perm === 'granted') setNotify(true);
+    else setNotify(false);
+  };
   return (
     <MWPage scrollKey="settings">
       <MWNavBar eyebrow="PROFILE" title="設定" />
@@ -102,8 +110,17 @@ export default function Settings({ dark, setDark, store }) {
       </SettingsGroup>
 
       <SettingsGroup label="通知">
-        <SettingsRow icon="bell" label="提醒通知" right={<MWSwitch on={true} onChange={()=>{}}/>} />
-        <SettingsRow icon="calendar" label="每日早報時間" right={<span style={{ color: T.muted, fontFamily: '"Geist Mono", monospace', fontSize: 13 }}>08:00</span>} />
+        <SettingsRow
+          icon="bell"
+          label={permStatus === 'denied' ? '提醒通知（瀏覽器已拒絕）' :
+                 permStatus === 'unsupported' ? '提醒通知（此裝置不支援）' : '提醒通知'}
+          right={
+            <MWSwitch
+              on={!!notify && permStatus === 'granted'}
+              onChange={toggleNotify}
+            />
+          }
+        />
       </SettingsGroup>
 
       <SettingsGroup label="其他">

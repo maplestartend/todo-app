@@ -1,9 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { INITIAL_TODOS } from './data.js';
+import { nextDueDate } from './utils/dueDate.js';
 
 const STORAGE_KEY = 'mw_todos';
 const SCHEMA_VERSION = 2;
 const WRITE_DEBOUNCE_MS = 400;
+
+/** Whether marking this todo done should also spawn a fresh next-instance. */
+function shouldRecur(todo) {
+  return todo.repeat && todo.repeat !== 'none';
+}
+
+function spawnNext(list, original) {
+  const newDue = nextDueDate(original);
+  if (!newDue) return list;
+  const newTodo = {
+    ...original,
+    id: Date.now(),
+    state: 'todo',
+    dueDate: newDue,
+    lastNotifiedAt: null,
+    subtasks: (original.subtasks || []).map(s => ({ ...s, done: false })),
+  };
+  return [newTodo, ...list];
+}
 
 /**
  * Storage payload shape: `{ version: number, todos: Todo[] }`.
@@ -93,11 +113,26 @@ export function useStore() {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  const cycleState = (id) => setTodos(ts => ts.map(t => t.id === id
-    ? { ...t, state: t.state === 'todo' ? 'doing' : t.state === 'doing' ? 'done' : 'todo' }
-    : t));
+  const cycleState = (id) => setTodos(ts => {
+    const t = ts.find(x => x.id === id);
+    if (!t) return ts;
+    const next = t.state === 'todo' ? 'doing' : t.state === 'doing' ? 'done' : 'todo';
+    let updated = ts.map(x => x.id === id ? { ...x, state: next } : x);
+    if (next === 'done' && t.state !== 'done' && shouldRecur(t)) {
+      updated = spawnNext(updated, t);
+    }
+    return updated;
+  });
 
-  const setState = (id, state) => setTodos(ts => ts.map(t => t.id === id ? { ...t, state } : t));
+  const setState = (id, state) => setTodos(ts => {
+    const t = ts.find(x => x.id === id);
+    if (!t) return ts;
+    let updated = ts.map(x => x.id === id ? { ...x, state } : x);
+    if (state === 'done' && t.state !== 'done' && shouldRecur(t)) {
+      updated = spawnNext(updated, t);
+    }
+    return updated;
+  });
 
   const add = (todo) => setTodos(ts => [
     { id: Date.now(), state: 'todo', subtasks: [], note: '', ...todo },
