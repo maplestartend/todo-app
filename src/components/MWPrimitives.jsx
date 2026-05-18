@@ -91,9 +91,9 @@ export function MWRow({ todo, onToggle, onOpen }) {
           <span style={{ fontSize: 11, color: catColor, letterSpacing: 0.5 }}>{cat.label}</span>
           <span style={{ fontSize: 11, color: T.muted, fontFamily: '"Geist Mono", monospace' }}>·</span>
           <span style={{ fontSize: 11, color: T.muted, fontFamily: '"Geist Mono", monospace' }}>{todo.time}</span>
-          {todo.sub > 0 && (
+          {todo.subtasks && todo.subtasks.length > 0 && (
             <span style={{ color: T.muted, fontFamily: 'Caveat, cursive', fontSize: 14 }}>
-              {todo.subDone}/{todo.sub}
+              {todo.subtasks.filter(s => s.done).length}/{todo.subtasks.length}
             </span>
           )}
           {todo.state === 'doing' && (

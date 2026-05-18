@@ -1,8 +1,25 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { INITIAL_TODOS } from './data.js';
 
+const STORAGE_KEY = 'mw_todos_v1';
+
+function loadInitial() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return INITIAL_TODOS;
+}
+
 export function useStore() {
-  const [todos, setTodos] = useState(INITIAL_TODOS);
+  const [todos, setTodos] = useState(loadInitial);
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(todos)); } catch {}
+  }, [todos]);
 
   const cycleState = (id) => setTodos(ts => ts.map(t => t.id === id
     ? { ...t, state: t.state === 'todo' ? 'doing' : t.state === 'doing' ? 'done' : 'todo' }
@@ -11,7 +28,7 @@ export function useStore() {
   const setState = (id, state) => setTodos(ts => ts.map(t => t.id === id ? { ...t, state } : t));
 
   const add = (todo) => setTodos(ts => [
-    { id: Date.now(), state: 'todo', sub: 0, subDone: 0, ...todo },
+    { id: Date.now(), state: 'todo', subtasks: [], note: '', ...todo },
     ...ts,
   ]);
 

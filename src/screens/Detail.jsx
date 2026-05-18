@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useMW } from '../theme.js';
 import { CATEGORIES, PRIORITY } from '../data.js';
 import { MWPage, MWNavBar } from '../components/MWChrome.jsx';
@@ -8,20 +8,16 @@ import MWIcon from '../components/MWIcon.jsx';
 export default function Detail({ store, nav, params }) {
   const T = useMW();
   const todo = store.todos.find(t => t.id === params.id);
-  const [subtasks, setSubtasks] = useState(() => {
-    if (!todo) return [];
-    if (todo.id === 1) return [
-      { id: 1, title: '收集資料來源', done: true },
-      { id: 2, title: '撰寫摘要與重點', done: false },
-      { id: 3, title: '請主管 review', done: false },
-    ];
-    return Array.from({ length: todo.sub || 0 }, (_, i) => ({ id: i+1, title: `子項目 ${i+1}`, done: i < todo.subDone }));
-  });
-  const [note, setNote] = useState(todo?.id === 1
-    ? '記得引用上季度的 KPI 對照圖；如果時間夠的話加上 Q3 的趨勢分析。'
-    : '');
-
   if (!todo) return <MWPage><div style={{padding:60}}>找不到任務</div></MWPage>;
+
+  const subtasks = todo.subtasks || [];
+  const note = todo.note || '';
+
+  const writeSubtasks = (updater) => {
+    const next = typeof updater === 'function' ? updater(subtasks) : updater;
+    store.update(todo.id, { subtasks: next });
+  };
+  const writeNote = (value) => store.update(todo.id, { note: value });
 
   const cat = CATEGORIES[todo.cat];
   const prio = PRIORITY[todo.prio];
@@ -96,7 +92,7 @@ export default function Detail({ store, nav, params }) {
             borderBottom: `1px dashed ${T.hairline}55`,
           }}>
             <MWCheck state={s.done ? 'done' : 'todo'} size={20}
-              onClick={() => setSubtasks(ss => ss.map(x => x.id===s.id ? {...x, done: !x.done} : x))}
+              onClick={() => writeSubtasks(ss => ss.map(x => x.id===s.id ? {...x, done: !x.done} : x))}
             />
             <div style={{ flex: 1, fontSize: 15, opacity: s.done ? 0.5 : 1 }}>
               <MWStrike done={s.done}>{s.title}</MWStrike>
@@ -109,7 +105,7 @@ export default function Detail({ store, nav, params }) {
           fontFamily: 'Huninn, sans-serif',
           display: 'flex', alignItems: 'center', gap: 6,
         }}
-        onClick={() => setSubtasks(ss => [...ss, { id: Date.now(), title: '新的子項目', done: false }])}>
+        onClick={() => writeSubtasks(ss => [...ss, { id: Date.now(), title: '新的子項目', done: false }])}>
           <MWIcon name="plus" size={14} stroke={T.muted} sw={1.6} />
           加上子項目
         </button>
@@ -138,7 +134,7 @@ export default function Detail({ store, nav, params }) {
         <SectionHead icon="note" title="備註" />
       </div>
       <div style={{ padding: '0 22px 30px' }}>
-        <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="加上一些細節..."
+        <textarea value={note} onChange={e => writeNote(e.target.value)} placeholder="加上一些細節..."
           style={{
             width: '100%', minHeight: 84, boxSizing: 'border-box',
             background: T.paperRaised, border: `1px solid ${T.hairline}55`,
