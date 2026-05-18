@@ -11,18 +11,30 @@ function shouldRecur(todo) {
   return todo.repeat && todo.repeat !== 'none';
 }
 
+// Date.now() alone collides if two ids are generated in the same ms (rapid
+// completion of recurring tasks could spawn two ids in the same tick). Mix
+// in random noise.
+function uid() {
+  return Date.now() * 1000 + Math.floor(Math.random() * 1000);
+}
+
 function spawnNext(list, original) {
   const newDue = nextDueDate(original);
   if (!newDue) return list;
   const newTodo = {
     ...original,
-    id: Date.now(),
+    id: uid(),
     state: 'todo',
     dueDate: newDue,
     lastNotifiedAt: null,
-    subtasks: (original.subtasks || []).map(s => ({ ...s, done: false })),
+    // Subtasks need fresh ids too — sharing the originals risks React key
+    // collisions when both the completed and the spawned copy are visible.
+    subtasks: (original.subtasks || []).map(s => ({ ...s, id: uid(), done: false })),
   };
-  return [newTodo, ...list];
+  // Mark the *original* (completed) instance as no-longer-recurring so the
+  // user can re-cycle its state without firing another spawn. The cloned
+  // future instance carries the repeat cadence forward.
+  return [newTodo, ...list.map(t => t.id === original.id ? { ...t, repeat: 'none' } : t)];
 }
 
 /**
@@ -52,7 +64,12 @@ function loadInitial() {
       if (parsed && Array.isArray(parsed.todos)) return parsed.todos;
     }
     const legacy = migrateFromV1();
-    if (legacy) return legacy;
+    if (legacy) {
+      // Finalize the migration immediately so subsequent loads don't keep
+      // falling back to the v1 key.
+      writePayload(legacy);
+      return legacy;
+    }
   } catch (err) {
     console.warn('[useStore] load failed', err);
   }
@@ -135,7 +152,7 @@ export function useStore() {
   });
 
   const add = (todo) => setTodos(ts => [
-    { id: Date.now(), state: 'todo', subtasks: [], note: '', ...todo },
+    { id: uid(), state: 'todo', subtasks: [], note: '', ...todo },
     ...ts,
   ]);
 

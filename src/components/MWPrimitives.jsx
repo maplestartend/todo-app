@@ -2,9 +2,30 @@ import React, { useRef } from 'react';
 import { useMW } from '../theme.js';
 import { CATEGORIES, PRIORITY } from '../data.js';
 import { getCategoryColor, STATE_LABEL } from '../utils/categoryColor.js';
-import { isOverdue, isDueToday } from '../utils/dueDate.js';
-import { radius, motion, touch } from '../designSystem/tokens.js';
+import { isOverdue, isDueToday, parseDue } from '../utils/dueDate.js';
 import MWIcon from './MWIcon.jsx';
+
+// Compact "when" label for a list row. Prefers dueDate over the legacy
+// free-text `time` field so a 7-day-away task no longer reads as just "14:30".
+function formatRowWhen(todo, now) {
+  if (todo.dueDate) {
+    const due = parseDue(todo);
+    if (!due) return todo.time || '';
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    const dueDay = new Date(due);
+    dueDay.setHours(0, 0, 0, 0);
+    const dayDiff = Math.round((dueDay - today) / 86400000);
+    const t = todo.dueTime ? ` ${todo.dueTime}` : '';
+    if (dayDiff < -1) return `逾期 ${-dayDiff} 天`;
+    if (dayDiff === -1) return `昨天${t}`;
+    if (dayDiff === 0) return `今天${t}`;
+    if (dayDiff === 1) return `明天${t}`;
+    if (dayDiff < 7) return `${dayDiff} 天內${t}`;
+    return `${due.getMonth() + 1}/${due.getDate()}${t}`;
+  }
+  return todo.time || '';
+}
 
 export function MWCheck({ state, onClick, size = 24, label }) {
   const T = useMW();
@@ -70,12 +91,17 @@ export function MWStrike({ children, done }) {
   );
 }
 
-export function MWRow({ todo, onToggle, onOpen }) {
+export function MWRow({ todo, onToggle, onOpen, overdue, today, now }) {
   const T = useMW();
   const cat = CATEGORIES[todo.cat];
   const prio = PRIORITY[todo.prio];
   const catColor = getCategoryColor(todo.cat, T);
   const isDone = todo.state === 'done';
+  // Accept memoized flags from parent; fall back to per-row compute so
+  // standalone uses still work.
+  const ov = overdue != null ? overdue : (!isDone && isOverdue(todo));
+  const td = today   != null ? today   : (!isDone && !ov && isDueToday(todo));
+  const whenLabel = formatRowWhen(todo, now || new Date());
 
   // Track touch start so horizontal pan / long press does not fire onOpen.
   const press = useRef({ x: 0, y: 0, t: 0, valid: false });
@@ -91,21 +117,29 @@ export function MWRow({ todo, onToggle, onOpen }) {
     if (dx > 8 || dy > 12) press.current.valid = false;
   };
   const onPointerCancel = () => { press.current.valid = false; };
-  const onClick = (e) => {
+  const onClick = () => {
     const dt = Date.now() - press.current.t;
     if (!press.current.valid || dt > 600) return;
     onOpen && onOpen();
   };
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onOpen && onOpen();
+    }
+  };
 
+  const stateLabelExtra = ov ? '逾期' : td ? '今天' : '';
   return (
     <div
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerCancel={onPointerCancel}
       onClick={onClick}
+      onKeyDown={onKeyDown}
       role="button"
       tabIndex={0}
-      aria-label={`${todo.title} · ${cat.label} · ${STATE_LABEL[todo.state]}`}
+      aria-label={[todo.title, cat.label, STATE_LABEL[todo.state], stateLabelExtra].filter(Boolean).join(' · ')}
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '14px 18px 14px 22px', cursor: 'pointer',
@@ -130,40 +164,36 @@ export function MWRow({ todo, onToggle, onOpen }) {
         }}>
           <MWStrike done={isDone}>{todo.title}</MWStrike>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 2 }}>
-          <span style={{ fontSize: 11, color: catColor, letterSpacing: 0.5 }}>{cat.label}</span>
-          <span style={{ fontSize: 11, color: T.muted, fontFamily: '"Geist Mono", monospace' }}>·</span>
-          <span style={{ fontSize: 11, color: T.muted, fontFamily: '"Geist Mono", monospace' }}>{todo.time}</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2, flexWrap: 'nowrap', minWidth: 0 }}>
+          <span style={{ fontSize: 11, color: catColor, letterSpacing: 0.5, flexShrink: 0 }}>{cat.label}</span>
+          {whenLabel && (
+            <>
+              <span style={{ fontSize: 11, color: T.muted, flexShrink: 0 }}>·</span>
+              <span
+                style={{
+                  fontSize: 11, fontFamily: '"Geist Mono", monospace', flexShrink: 0,
+                  color: ov ? T.accent : td ? T.green : T.muted,
+                  fontWeight: (ov || td) ? 600 : 400,
+                }}
+              >{whenLabel}</span>
+            </>
+          )}
           {todo.subtasks && todo.subtasks.length > 0 && (
-            <span style={{ color: T.muted, fontFamily: 'Caveat, cursive', fontSize: 14 }}>
+            <span style={{ color: T.muted, fontFamily: 'Caveat, cursive', fontSize: 14, flexShrink: 0 }}>
               {todo.subtasks.filter(s => s.done).length}/{todo.subtasks.length}
             </span>
           )}
           {todo.state === 'doing' && (
             <span style={{
               fontSize: 10, color: T.accent,
-              padding: '1px 7px', borderRadius: 99,
+              padding: '1px 7px', borderRadius: 99, flexShrink: 0,
               border: `1px solid ${T.accent}66`,
             }}>進行中</span>
           )}
-          {!isDone && isOverdue(todo) && (
-            <span style={{
-              fontSize: 10, color: T.accent, fontWeight: 600,
-              padding: '1px 7px', borderRadius: 99,
-              background: T.accent + '18',
-              fontFamily: '"Geist Mono", monospace', letterSpacing: 0.5,
-            }}>OVERDUE</span>
-          )}
-          {!isDone && !isOverdue(todo) && isDueToday(todo) && (
-            <span style={{
-              fontSize: 10, color: T.green, fontWeight: 600,
-              padding: '1px 7px', borderRadius: 99,
-              background: T.green + '18',
-              fontFamily: '"Geist Mono", monospace', letterSpacing: 0.5,
-            }}>TODAY</span>
-          )}
           {todo.repeat && todo.repeat !== 'none' && (
-            <MWIcon name="archive" size={11} stroke={T.muted} sw={1.6} />
+            <span aria-label="重複任務" style={{ display: 'inline-flex', flexShrink: 0 }}>
+              <MWIcon name="archive" size={11} stroke={T.muted} sw={1.6} />
+            </span>
           )}
         </div>
       </div>
@@ -172,20 +202,24 @@ export function MWRow({ todo, onToggle, onOpen }) {
   );
 }
 
-export function MWFab({ onClick }) {
+export function MWFab({ onClick, label = '新增任務' }) {
   const T = useMW();
   return (
-    <button onClick={onClick} style={{
-      position: 'absolute', right: 22, bottom: 'var(--mw-fab-bottom)', zIndex: 30,
-      width: 58, height: 58, borderRadius: '50%',
-      border: 'none', cursor: 'pointer',
-      background: T.ink, color: T.paper,
-      boxShadow: T.shadow,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transition: 'transform 180ms',
-    }}
-    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06) rotate(8deg)'}
-    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) rotate(0)'}>
+    <button
+      onClick={onClick}
+      aria-label={label}
+      style={{
+        position: 'absolute', right: 22, bottom: 'var(--mw-fab-bottom)', zIndex: 30,
+        width: 58, height: 58, borderRadius: '50%',
+        border: 'none', cursor: 'pointer',
+        background: T.ink, color: T.paper,
+        boxShadow: T.shadow,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'transform 180ms',
+      }}
+      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06) rotate(8deg)'}
+      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) rotate(0)'}
+    >
       <MWIcon name="plus" size={26} stroke={T.paper} sw={2} />
     </button>
   );
@@ -218,16 +252,22 @@ export function SectionHead({ icon, title, right }) {
   );
 }
 
-export function MWSwitch({ on, onChange }) {
+export function MWSwitch({ on, onChange, label }) {
   const T = useMW();
   return (
-    <button onClick={() => onChange(!on)} style={{
-      width: 44, height: 26, borderRadius: 99,
-      background: on ? T.accent : T.hairline + '88',
-      border: 'none', cursor: 'pointer', position: 'relative',
-      transition: 'background 200ms',
-      padding: 0,
-    }}>
+    <button
+      onClick={() => onChange(!on)}
+      role="switch"
+      aria-checked={!!on}
+      aria-label={label}
+      style={{
+        width: 44, height: 26, borderRadius: 99,
+        background: on ? T.accent : T.hairline + '88',
+        border: 'none', cursor: 'pointer', position: 'relative',
+        transition: 'background 200ms',
+        padding: 0,
+      }}
+    >
       <div style={{
         position: 'absolute', top: 3, left: on ? 21 : 3,
         width: 20, height: 20, borderRadius: 99,

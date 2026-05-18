@@ -20,14 +20,21 @@ export function MWNavBar({
   rightIcon, onRight, rightLabel,
   rightAction,
   large = false,
+  sticky = true,
 }) {
   const T = useMW();
   return (
     <div style={{
+      position: sticky ? 'sticky' : 'static',
+      top: 0, zIndex: 10,
       paddingTop: 'var(--mw-nav-pad-top)', paddingLeft: 18, paddingRight: 18,
       paddingBottom: large ? 6 : 12,
       display: 'flex', alignItems: 'flex-start', gap: 4,
       color: T.ink,
+      // Solid background so list content scrolling underneath doesn't bleed
+      // through, and so the navbar stays anchored when iOS scrolls the form
+      // up to make room for the keyboard.
+      background: T.paper,
     }}>
       {leftIcon && (
         <button
@@ -77,9 +84,9 @@ export function MWTabBar({ active, onChange }) {
     <nav aria-label="主要分頁" style={{
       position: 'absolute', left: 0, right: 0, bottom: 0,
       paddingBottom: 'var(--mw-tab-pad-bottom)', paddingTop: 6, paddingLeft: 6, paddingRight: 6,
-      background: T.paper + 'cc',
-      backdropFilter: 'blur(16px) saturate(140%)',
-      WebkitBackdropFilter: 'blur(16px) saturate(140%)',
+      background: T.paper + 'd9',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
       borderTop: `1px solid ${T.hairline}55`,
       display: 'flex', justifyContent: 'space-around',
       zIndex: 20,
@@ -119,14 +126,17 @@ export function MWPage({ children, withTabBar = true, scroll = true, scrollKey }
   const T = useMW();
   const scrollRef = useRef(null);
 
+  // Restore on mount, write every scroll. The naive approach of "save in
+  // useEffect cleanup" loses everything because React detaches the DOM
+  // before running cleanup, so el.scrollTop reads 0.
   useEffect(() => {
     if (!scrollKey || !scroll || !scrollRef.current) return;
     const el = scrollRef.current;
     const saved = scrollMemory.get(scrollKey);
     if (saved != null) el.scrollTop = saved;
-    return () => {
-      scrollMemory.set(scrollKey, el.scrollTop);
-    };
+    const onScroll = () => { scrollMemory.set(scrollKey, el.scrollTop); };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
   }, [scrollKey, scroll]);
 
   return (
@@ -145,7 +155,7 @@ export function MWPage({ children, withTabBar = true, scroll = true, scrollKey }
           : `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractal' baseFrequency='1.0' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.4  0 0 0 0 0.25  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`,
       }} />
       <div ref={scrollRef} className={scroll ? 'mw-scroll' : undefined} style={{
-        position: 'relative', height: '100%',
+        position: 'relative', height: '100%', boxSizing: 'border-box',
         display: 'flex', flexDirection: 'column',
         overflow: scroll ? 'auto' : 'hidden',
         paddingBottom: withTabBar ? 'var(--mw-page-pad-bottom)' : 0,

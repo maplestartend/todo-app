@@ -72,20 +72,28 @@ function useIsMobileViewport() {
 
 function PhoneApp({ store, dark, setDark, notify, setNotify, mobile = false }) {
   const [route, setRoute] = useState({ screen: 'home', params: {} });
+  const [dir, setDir] = useState('push'); // 'push' | 'pop' | 'tab'
   const stack = useRef([{ screen: 'home', params: {} }]);
 
   const nav = useMemo(() => ({
     go: (screen, params = {}) => {
       stack.current.push({ screen, params });
+      setDir('push');
       setRoute({ screen, params });
     },
-    back: () => {
-      if (stack.current.length > 1) stack.current.pop();
+    // back(n) pops n frames so callers can skip over an interim screen
+    // (e.g. delete-from-Edit must skip the now-stale Detail underneath).
+    back: (n = 1) => {
+      for (let i = 0; i < n; i++) {
+        if (stack.current.length > 1) stack.current.pop();
+      }
       const top = stack.current[stack.current.length - 1] || { screen: 'home', params: {} };
+      setDir('pop');
       setRoute(top);
     },
     set: (screen, params = {}) => {
       stack.current = [{ screen, params }];
+      setDir('tab');
       setRoute({ screen, params });
     },
   }), []);
@@ -105,10 +113,10 @@ function PhoneApp({ store, dark, setDark, notify, setNotify, mobile = false }) {
     default:         body = <Home store={store} nav={nav} />;
   }
 
-  const isPush = route.screen === 'detail' || route.screen === 'edit';
-  const anim = isPush
-    ? 'mwPush 320ms cubic-bezier(0.32, 0.72, 0, 1) both'
-    : 'mwIn 260ms cubic-bezier(0.22, 0.61, 0.36, 1) both';
+  const anim =
+    dir === 'pop'  ? 'mwPushBack 320ms cubic-bezier(0.32, 0.72, 0, 1) both' :
+    dir === 'push' ? 'mwPush 320ms cubic-bezier(0.32, 0.72, 0, 1) both' :
+                     'mwIn 260ms cubic-bezier(0.22, 0.61, 0.36, 1) both';
 
   const inner = (
     <div style={{ height: '100%', position: 'relative' }}>
@@ -121,7 +129,7 @@ function PhoneApp({ store, dark, setDark, notify, setNotify, mobile = false }) {
         </div>
       </div>
       {(route.screen === 'home' || route.screen === 'folders') && (
-        <MWFab onClick={() => nav.go('edit', { mode: 'new' })} />
+        <MWFab onClick={() => nav.go('edit', { mode: 'new', returnTo: route.screen })} />
       )}
       {isTab && <MWTabBar active={route.screen} onChange={onTab} />}
     </div>

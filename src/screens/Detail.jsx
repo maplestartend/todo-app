@@ -69,17 +69,23 @@ export default function Detail({ store, nav, params }) {
             {Math.round(pct*100)}%
           </span>
         </div>
-        <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+        <div role="radiogroup" aria-label="任務狀態" style={{ marginTop: 12, display: 'flex', gap: 8 }}>
           {['todo','doing','done'].map(s => (
-            <button key={s} onClick={() => store.setState(todo.id, s)} style={{
-              flex: 1, padding: '8px 0',
-              border: `1px solid ${todo.state === s ? T.ink : T.hairline + '66'}`,
-              background: todo.state === s ? T.ink : 'transparent',
-              color: todo.state === s ? T.paper : T.ink,
-              borderRadius: 10, cursor: 'pointer', fontSize: 13,
-              fontFamily: 'Huninn, sans-serif',
-              transition: 'all 180ms',
-            }}>
+            <button
+              key={s}
+              onClick={() => store.setState(todo.id, s)}
+              role="radio"
+              aria-checked={todo.state === s}
+              style={{
+                flex: 1, padding: '10px 0', minHeight: 40,
+                border: `1px solid ${todo.state === s ? T.ink : T.hairline + '66'}`,
+                background: todo.state === s ? T.ink : 'transparent',
+                color: todo.state === s ? T.paper : T.ink,
+                borderRadius: 10, cursor: 'pointer', fontSize: 13,
+                fontFamily: 'Huninn, sans-serif',
+                transition: 'all 180ms',
+              }}
+            >
               {STATE_LABEL[s]}
             </button>
           ))}
@@ -122,6 +128,9 @@ export default function Detail({ store, nav, params }) {
       <div style={{ padding: '0 22px' }}>
         <button
           onClick={() => nav.go('edit', { mode: 'edit', id: todo.id })}
+          aria-label={todo.dueDate
+            ? `編輯截止與提醒（${formatDueLabel(todo)}${todo.remindBefore != null ? `，${REMIND_LABEL.get(todo.remindBefore) || ''}提醒` : ''}）`
+            : '編輯截止與提醒（未設定）'}
           style={{
             width: '100%', textAlign: 'left',
             padding: '12px 14px',

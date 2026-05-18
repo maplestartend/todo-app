@@ -8,16 +8,27 @@ import { getCategoryColor } from '../utils/categoryColor.js';
 function Segmented({ options, value, onChange, getKey, getLabel, color }) {
   const T = useMW();
   return (
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+    <div
+      role="radiogroup"
+      style={{
+        display: 'flex', gap: 6,
+        // Horizontal scroll keeps the row visually intact at 393px instead
+        // of wrapping "1 天前" alone onto a second line.
+        overflowX: 'auto', overflowY: 'visible',
+        paddingBottom: 4, scrollbarWidth: 'none',
+      }}
+    >
       {options.map(opt => {
         const k = getKey(opt);
-        const sel = k === value || (k == null && value == null);
+        const sel = k === value;
         return (
           <button
             key={String(k)}
             onClick={() => onChange(k)}
-            aria-pressed={sel}
+            role="radio"
+            aria-checked={sel}
             style={{
+              flexShrink: 0,
               padding: '8px 14px', minHeight: 36,
               borderRadius: 99,
               background: sel ? (color || T.ink) : 'transparent',
@@ -25,6 +36,7 @@ function Segmented({ options, value, onChange, getKey, getLabel, color }) {
               border: `1px solid ${sel ? (color || T.ink) : T.hairline + '88'}`,
               fontSize: 13, fontFamily: 'Huninn, sans-serif',
               cursor: 'pointer', transition: 'all 160ms',
+              WebkitTapHighlightColor: 'transparent',
             }}
           >
             {getLabel(opt)}
@@ -51,8 +63,33 @@ export default function Edit({ store, nav, params }) {
   const [note, setNote] = useState(existing?.note || '');
 
   const canSave = title.trim().length > 0;
+
+  // Dirty-check: only prompt on close when user actually changed something.
+  const dirty = (
+    title !== (existing?.title || '') ||
+    cat !== (existing?.cat || 'work') ||
+    prio !== (existing?.prio || 'mid') ||
+    dueDate !== (existing?.dueDate || '') ||
+    dueTime !== (existing?.dueTime || '') ||
+    repeat !== (existing?.repeat || 'none') ||
+    remindBefore !== (existing && 'remindBefore' in existing ? existing.remindBefore : null) ||
+    note !== (existing?.note || '')
+  );
+  const handleClose = () => {
+    if (dirty && !window.confirm('未儲存的變更會被丟棄，確定離開？')) return;
+    nav.back();
+  };
+
   const save = () => {
     if (!canSave) return;
+    // Only re-arm the reminder when something that actually affects the
+    // notification (due time or how-early-to-remind) changes. Editing note
+    // alone used to silently re-fire the reminder on the next poll.
+    const dueOrRemindChanged = isEdit && (
+      dueDate !== existing.dueDate ||
+      dueTime !== existing.dueTime ||
+      remindBefore !== (('remindBefore' in existing) ? existing.remindBefore : null)
+    );
     const patch = {
       title: title.trim(),
       cat, prio,
@@ -61,15 +98,17 @@ export default function Edit({ store, nav, params }) {
       dueDate, dueTime, repeat,
       remindBefore: remindBefore ?? null,
       note,
-      // Re-arm reminder when due/remind changes.
-      lastNotifiedAt: null,
+      ...(isEdit
+        ? (dueOrRemindChanged ? { lastNotifiedAt: null } : {})
+        : { lastNotifiedAt: null }),
     };
     if (isEdit) {
       store.update(existing.id, patch);
       nav.back();
     } else {
       store.add(patch);
-      nav.set('home');
+      // Return to whichever tab the user invoked + from (home or folders).
+      nav.set(params.returnTo || 'home');
     }
   };
 
@@ -78,7 +117,7 @@ export default function Edit({ store, nav, params }) {
       <MWNavBar
         eyebrow={isEdit ? 'EDIT TASK' : 'NEW TASK'}
         title={isEdit ? '編輯任務' : '新增一件事'}
-        leftIcon="close" onLeft={() => nav.back()}
+        leftIcon="close" onLeft={handleClose}
         rightAction={(
           <button
             onClick={save}
@@ -210,13 +249,22 @@ export default function Edit({ store, nav, params }) {
       <div style={{ flex: 1, minHeight: 12 }}/>
       {isEdit && (
         <div style={{ padding: '8px 22px 24px' }}>
-          <button onClick={() => { store.remove(existing.id); nav.back(); }} style={{
-            width: '100%', padding: '12px',
-            border: `1px dashed ${T.accent}66`, borderRadius: 12,
-            background: 'transparent', color: T.accent,
-            fontFamily: 'Huninn, sans-serif', fontSize: 14,
-            cursor: 'pointer',
-          }}>刪除任務</button>
+          <button
+            onClick={() => {
+              if (!window.confirm(`刪除「${existing.title}」？`)) return;
+              store.remove(existing.id);
+              // Pop both Edit and the now-stale Detail so the user doesn't
+              // land on a "找不到任務" placeholder.
+              nav.back(2);
+            }}
+            style={{
+              width: '100%', padding: '12px', minHeight: 44,
+              border: `1px dashed ${T.accent}66`, borderRadius: 12,
+              background: 'transparent', color: T.accent,
+              fontFamily: 'Huninn, sans-serif', fontSize: 14,
+              cursor: 'pointer',
+            }}
+          >刪除任務</button>
         </div>
       )}
     </MWPage>

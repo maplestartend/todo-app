@@ -63,20 +63,28 @@ export function isDueToday(todo, now = new Date()) {
 
 /**
  * Given a Todo with `repeat !== 'none'`, return the next dueDate (YYYY-MM-DD)
- * after its current dueDate (or after today if no dueDate). Returns '' if
- * `repeat === 'none'` or no current dueDate.
+ * after both its current dueDate AND today. Returns '' if `repeat === 'none'`.
+ *
+ * Iterates the cadence until past today so completing an overdue recurring
+ * task doesn't immediately spawn another already-overdue instance.
  */
 export function nextDueDate(todo, from = null) {
   if (!todo.repeat || todo.repeat === 'none') return '';
   const base = from || (todo.dueDate ? parseDue(todo) : new Date());
   if (!base) return '';
   const d = new Date(base);
-  // Strip time for the increment; only the date part advances.
+  // Strip time; only the date part advances.
   d.setHours(0, 0, 0, 0);
-  if (todo.repeat === 'daily') d.setDate(d.getDate() + 1);
-  else if (todo.repeat === 'weekly') d.setDate(d.getDate() + 7);
-  else if (todo.repeat === 'monthly') d.setMonth(d.getMonth() + 1);
-  else return '';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const step = () => {
+    if (todo.repeat === 'daily') d.setDate(d.getDate() + 1);
+    else if (todo.repeat === 'weekly') d.setDate(d.getDate() + 7);
+    else if (todo.repeat === 'monthly') d.setMonth(d.getMonth() + 1);
+  };
+  // Always advance at least once, then keep advancing until past today.
+  step();
+  while (d.getTime() <= today.getTime()) step();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 

@@ -98,7 +98,7 @@ export default function Settings({ dark, setDark, store, notify, setNotify }) {
 
       <SettingsGroup label="外觀">
         <SettingsRow icon="moon" label="深色模式"
-          right={<MWSwitch on={dark} onChange={setDark} />} />
+          right={<MWSwitch on={dark} onChange={setDark} label="深色模式" />} />
         <SettingsRow icon="edit" label="主題顏色" right={
           <div style={{ display: 'flex', gap: 6 }}>
             {['#c46a4a','#7a8c5e','#b88a3e','#5b8aa8'].map(c => (
@@ -118,9 +118,18 @@ export default function Settings({ dark, setDark, store, notify, setNotify }) {
             <MWSwitch
               on={!!notify && permStatus === 'granted'}
               onChange={toggleNotify}
+              label="提醒通知"
             />
           }
         />
+        {notify && permStatus === 'granted' && (
+          <div style={{
+            padding: '8px 14px', fontSize: 11, color: T.muted,
+            borderTop: `1px dashed ${T.hairline}55`, lineHeight: 1.5,
+          }}>
+            需保持 app 開啟（或加入主畫面以 standalone 啟動，iOS 16.4+）才能收到提醒
+          </div>
+        )}
       </SettingsGroup>
 
       <SettingsGroup label="其他">
