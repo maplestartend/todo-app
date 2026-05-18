@@ -90,7 +90,7 @@ function PhoneApp({ store, dark, setDark, mobile = false }) {
     case 'folders':  body = <Categories store={store} nav={nav} />; break;
     case 'search':   body = <Search store={store} nav={nav} />; break;
     case 'archive':  body = <Archive store={store} nav={nav} />; break;
-    case 'settings': body = <Settings dark={dark} setDark={setDark} />; break;
+    case 'settings': body = <Settings dark={dark} setDark={setDark} store={store} />; break;
     default:         body = <Home store={store} nav={nav} />;
   }
 

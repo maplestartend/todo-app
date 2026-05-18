@@ -36,12 +36,13 @@ function SettingsRow({ icon, label, right }) {
   );
 }
 
-export default function Settings({ dark, setDark }) {
+export default function Settings({ dark, setDark, store }) {
   const T = useMW();
+  const s = store?.stats || { total: 0, done: 0, doing: 0 };
   const stats = [
-    { label: '總任務', value: 142 },
-    { label: '已完成', value: 87 },
-    { label: '連續天數', value: 12 },
+    { label: '總任務', value: s.total },
+    { label: '已完成', value: s.done },
+    { label: '進行中', value: s.doing },
   ];
   return (
     <MWPage scrollKey="settings">

@@ -32,10 +32,24 @@ npm run preview  # 預覽打包結果
 ## 技術
 
 - Vite 5 + React 18（單頁、無路由庫，自製 nav stack）
-- 狀態：自製 `useStore`，資料 JSON.stringify 寫入 `localStorage`
 - 字型：Huninn（繁中手寫）、Noto Sans TC、Caveat、Geist Mono
 - 響應式：寬螢幕顯示模擬的 iPhone 外框，窄螢幕（≤500px）切換為全螢幕模式
-- PWA shell：`viewport-fit=cover`、iOS standalone 偵測、safe-area 變數
+
+## 資料層
+
+- 自製 `useStore`，資料寫入 `localStorage`（key: `mw_todos`）
+- Schema v2：payload 包成 `{ version, todos }`，未來改欄位可安全 migrate；v1 的 bare array (`mw_todos_v1`) 會自動讀取一次
+- 寫入 debounce 400ms，避免連續勾選 / 編輯時頻繁 stringify
+- 監聽 `storage` event：多分頁 / PWA 多視窗自動同步
+- `beforeunload` / `pagehide` flush 未寫入的 pending 變更
+
+## PWA / Service Worker
+
+- 透過 [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) 產生 Workbox SW（`registerType: 'autoUpdate'`）
+- 預快取所有 `js / css / html / svg / png` build 產物，離線可開
+- runtime cache: Google Fonts、jsdelivr (Huninn) 採 `CacheFirst`，1 年 TTL
+- manifest 由 plugin 注入，含 maskable icon、`viewport-fit=cover`、`apple-mobile-web-app-status-bar-style: black-translucent`
+- 加入 iPhone 主畫面後以 standalone 模式運行，safe-area 自動讓位給動態島與 Home Indicator
 
 ## Design system
 
