@@ -91,7 +91,7 @@ export default function Detail({ store, nav, params }) {
             padding: '8px 6px',
             borderBottom: `1px dashed ${T.hairline}55`,
           }}>
-            <MWCheck state={s.done ? 'done' : 'todo'} size={20}
+            <MWCheck state={s.done ? 'done' : 'todo'} size={20} label={s.title}
               onClick={() => writeSubtasks(ss => ss.map(x => x.id===s.id ? {...x, done: !x.done} : x))}
             />
             <div style={{ flex: 1, fontSize: 15, opacity: s.done ? 0.5 : 1 }}>

@@ -1,29 +1,44 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useMW } from '../theme.js';
 import MWIcon from './MWIcon.jsx';
 
 export const iconBtn = (T) => ({
-  width: 38, height: 38, borderRadius: 12,
+  width: 44, height: 44, borderRadius: 12,
   background: 'transparent', border: 'none', cursor: 'pointer',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   color: T.ink, padding: 0, flexShrink: 0,
 });
 
-export function MWNavBar({ title, eyebrow, leftIcon, onLeft, rightIcon, onRight, large = false }) {
+const ICON_LABEL = {
+  back: '返回', close: '關閉', edit: '編輯', plus: '新增', trash: '刪除',
+  search: '搜尋', settings: '設定', home: '首頁', archive: '歸檔', folder: '分類',
+};
+
+export function MWNavBar({
+  title, eyebrow,
+  leftIcon, onLeft, leftLabel,
+  rightIcon, onRight, rightLabel,
+  rightAction,
+  large = false,
+}) {
   const T = useMW();
   return (
     <div style={{
-      paddingTop: 'var(--mw-nav-pad-top)', paddingLeft: 22, paddingRight: 22,
+      paddingTop: 'var(--mw-nav-pad-top)', paddingLeft: 18, paddingRight: 18,
       paddingBottom: large ? 6 : 12,
-      display: 'flex', alignItems: 'flex-start', gap: 8,
+      display: 'flex', alignItems: 'flex-start', gap: 4,
       color: T.ink,
     }}>
       {leftIcon && (
-        <button onClick={onLeft} aria-label="back" style={iconBtn(T)}>
+        <button
+          onClick={onLeft}
+          aria-label={leftLabel || ICON_LABEL[leftIcon] || leftIcon}
+          style={iconBtn(T)}
+        >
           <MWIcon name={leftIcon} size={22} stroke={T.ink} />
         </button>
       )}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, paddingTop: 4, paddingLeft: leftIcon ? 0 : 4 }}>
         {eyebrow && (
           <div style={{
             fontFamily: '"Geist Mono", monospace', fontSize: 11, letterSpacing: 2,
@@ -35,8 +50,13 @@ export function MWNavBar({ title, eyebrow, leftIcon, onLeft, rightIcon, onRight,
           lineHeight: 1.2, fontFamily: 'Huninn, sans-serif',
         }}>{title}</div>
       </div>
+      {rightAction}
       {rightIcon && (
-        <button onClick={onRight} aria-label="action" style={iconBtn(T)}>
+        <button
+          onClick={onRight}
+          aria-label={rightLabel || ICON_LABEL[rightIcon] || rightIcon}
+          style={iconBtn(T)}
+        >
           <MWIcon name={rightIcon} size={22} stroke={T.ink} />
         </button>
       )}
@@ -54,12 +74,12 @@ export function MWTabBar({ active, onChange }) {
     { id: 'settings', icon: 'settings', label: '設定' },
   ];
   return (
-    <div style={{
+    <nav aria-label="主要分頁" style={{
       position: 'absolute', left: 0, right: 0, bottom: 0,
-      paddingBottom: 'var(--mw-tab-pad-bottom)', paddingTop: 8, paddingLeft: 8, paddingRight: 8,
-      background: T.paper + 'ee',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
+      paddingBottom: 'var(--mw-tab-pad-bottom)', paddingTop: 6, paddingLeft: 6, paddingRight: 6,
+      background: T.paper + 'cc',
+      backdropFilter: 'blur(16px) saturate(140%)',
+      WebkitBackdropFilter: 'blur(16px) saturate(140%)',
       borderTop: `1px solid ${T.hairline}55`,
       display: 'flex', justifyContent: 'space-around',
       zIndex: 20,
@@ -67,13 +87,19 @@ export function MWTabBar({ active, onChange }) {
       {tabs.map(t => {
         const isActive = active === t.id;
         return (
-          <button key={t.id} onClick={() => onChange(t.id)} style={{
-            flex: 1, background: 'transparent', border: 'none', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-            padding: '6px 4px',
-            color: isActive ? T.accent : T.muted,
-            transition: 'color 200ms',
-          }}>
+          <button
+            key={t.id}
+            onClick={() => onChange(t.id)}
+            aria-label={t.label}
+            aria-current={isActive ? 'page' : undefined}
+            style={{
+              flex: 1, background: 'transparent', border: 'none', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+              padding: '8px 4px', minHeight: 48,
+              color: isActive ? T.accent : T.muted,
+              transition: 'color 200ms',
+            }}
+          >
             <MWIcon name={t.icon} size={22} stroke={isActive ? T.accent : T.muted} sw={isActive ? 1.9 : 1.5} />
             <span style={{
               fontSize: 10, letterSpacing: 0.5,
@@ -82,12 +108,27 @@ export function MWTabBar({ active, onChange }) {
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 }
 
-export function MWPage({ children, withTabBar = true, scroll = true }) {
+// Module-scoped memory so scroll positions survive route remounts.
+const scrollMemory = new Map();
+
+export function MWPage({ children, withTabBar = true, scroll = true, scrollKey }) {
   const T = useMW();
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (!scrollKey || !scroll || !scrollRef.current) return;
+    const el = scrollRef.current;
+    const saved = scrollMemory.get(scrollKey);
+    if (saved != null) el.scrollTop = saved;
+    return () => {
+      scrollMemory.set(scrollKey, el.scrollTop);
+    };
+  }, [scrollKey, scroll]);
+
   return (
     <div style={{
       width: '100%', height: '100%',
@@ -103,7 +144,7 @@ export function MWPage({ children, withTabBar = true, scroll = true }) {
           ? `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractal' baseFrequency='1.0' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`
           : `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractal' baseFrequency='1.0' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.4  0 0 0 0 0.25  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")`,
       }} />
-      <div className={scroll ? 'mw-scroll' : undefined} style={{
+      <div ref={scrollRef} className={scroll ? 'mw-scroll' : undefined} style={{
         position: 'relative', height: '100%',
         display: 'flex', flexDirection: 'column',
         overflow: scroll ? 'auto' : 'hidden',

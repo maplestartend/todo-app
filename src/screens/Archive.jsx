@@ -14,7 +14,7 @@ export default function Archive({ store, nav }) {
   const streak = [1,1,1,0,1,1,0,1,1,1,1,1,0,1];
 
   return (
-    <MWPage>
+    <MWPage scrollKey="archive">
       <MWNavBar eyebrow="DONE" title="完成的事" />
 
       <div style={{ margin: '4px 22px 12px', padding: '14px 16px',

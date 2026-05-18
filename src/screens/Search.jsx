@@ -16,7 +16,7 @@ export default function Search({ store, nav }) {
   const results = q.trim() ? store.todos.filter(t => t.title.includes(q.trim())) : [];
 
   return (
-    <MWPage>
+    <MWPage scrollKey="search">
       <MWNavBar eyebrow="SEARCH" title="搜尋" />
       <div style={{ padding: '4px 22px 14px' }}>
         <div style={{

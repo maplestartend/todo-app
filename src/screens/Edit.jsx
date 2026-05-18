@@ -12,16 +12,24 @@ export default function Edit({ store, nav, params }) {
   const [cat, setCat] = useState(existing?.cat || 'work');
   const [prio, setPrio] = useState(existing?.prio || 'mid');
   const [time, setTime] = useState(existing?.time || '');
-  const [date, setDate] = useState('2026.04.28');
-  const [note, setNote] = useState('');
+  const [date, setDate] = useState(existing?.date || '');
+  const [note, setNote] = useState(existing?.note || '');
 
+  const canSave = title.trim().length > 0;
   const save = () => {
-    if (!title.trim()) return;
+    if (!canSave) return;
+    const patch = {
+      title: title.trim(),
+      cat, prio,
+      time: time || '今天',
+      date: date.trim(),
+      note: note,
+    };
     if (isEdit) {
-      store.update(existing.id, { title: title.trim(), cat, prio, time: time || '今天' });
+      store.update(existing.id, patch);
       nav.back();
     } else {
-      store.add({ title: title.trim(), cat, prio, time: time || '今天' });
+      store.add(patch);
       nav.set('home');
     }
   };
@@ -32,6 +40,25 @@ export default function Edit({ store, nav, params }) {
         eyebrow={isEdit ? 'EDIT TASK' : 'NEW TASK'}
         title={isEdit ? '編輯任務' : '新增一件事'}
         leftIcon="close" onLeft={() => nav.back()}
+        rightAction={(
+          <button
+            onClick={save}
+            disabled={!canSave}
+            aria-label={isEdit ? '儲存變更' : '加進清單'}
+            style={{
+              alignSelf: 'center',
+              padding: '8px 14px', minHeight: 36,
+              border: 'none', borderRadius: 99,
+              background: canSave ? T.ink : T.hairline + '88',
+              color: canSave ? T.paper : T.muted,
+              fontFamily: 'Huninn, sans-serif', fontSize: 14,
+              cursor: canSave ? 'pointer' : 'not-allowed',
+              transition: 'background 180ms, color 180ms',
+            }}
+          >
+            {isEdit ? '儲存' : '加入'}
+          </button>
+        )}
       />
 
       <div style={{ padding: '4px 22px 12px' }}>
@@ -104,26 +131,17 @@ export default function Edit({ store, nav, params }) {
       </div>
 
       <div style={{ flex: 1 }}/>
-      <div style={{ padding: '16px 22px 32px' }}>
-        <button onClick={save} style={{
-          width: '100%', padding: '16px',
-          border: 'none', borderRadius: 14,
-          background: T.ink, color: T.paper,
-          fontFamily: 'Huninn, sans-serif', fontSize: 17,
-          cursor: 'pointer', boxShadow: T.shadow,
-        }}>
-          {isEdit ? '儲存變更' : '加進清單 ✦'}
-        </button>
-        {isEdit && (
+      {isEdit && (
+        <div style={{ padding: '8px 22px 24px' }}>
           <button onClick={() => { store.remove(existing.id); nav.back(); }} style={{
-            width: '100%', padding: '12px', marginTop: 8,
-            border: 'none', borderRadius: 12,
+            width: '100%', padding: '12px',
+            border: `1px dashed ${T.accent}66`, borderRadius: 12,
             background: 'transparent', color: T.accent,
             fontFamily: 'Huninn, sans-serif', fontSize: 14,
             cursor: 'pointer',
           }}>刪除任務</button>
-        )}
-      </div>
+        </div>
+      )}
     </MWPage>
   );
 }

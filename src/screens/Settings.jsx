@@ -44,7 +44,7 @@ export default function Settings({ dark, setDark }) {
     { label: '連續天數', value: 12 },
   ];
   return (
-    <MWPage>
+    <MWPage scrollKey="settings">
       <MWNavBar eyebrow="PROFILE" title="設定" />
 
       <div style={{ margin: '4px 22px 18px', padding: '20px 18px',

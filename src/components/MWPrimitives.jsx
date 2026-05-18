@@ -1,18 +1,23 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useMW } from '../theme.js';
 import { CATEGORIES, PRIORITY } from '../data.js';
 import MWIcon from './MWIcon.jsx';
 
-export function MWCheck({ state, onClick, size = 24 }) {
+const STATE_LABEL = { todo: '未開始', doing: '進行中', done: '已完成' };
+
+export function MWCheck({ state, onClick, size = 24, label }) {
   const T = useMW();
   const checked = state === 'done';
   const doing = state === 'doing';
+  const aria = [label, STATE_LABEL[state]].filter(Boolean).join(' · ');
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
+      aria-label={aria || STATE_LABEL[state]}
+      aria-pressed={checked}
       style={{
-        width: size + 8, height: size + 8,
-        background: 'transparent', border: 'none', padding: 4,
+        width: 44, height: 44,
+        background: 'transparent', border: 'none', padding: 0,
         cursor: 'pointer', flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
@@ -45,6 +50,10 @@ export function MWCheck({ state, onClick, size = 24 }) {
 
 export function MWStrike({ children, done }) {
   const T = useMW();
+  // In dark mode the ink is light cream — the strike is far more readable
+  // when drawn in the accent color than in ink (which used to be black in light
+  // mode but light in dark mode and so vanished against the dark paper).
+  const strokeColor = T.isDark ? T.accent : T.ink;
   return (
     <span style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
       {children}
@@ -52,7 +61,7 @@ export function MWStrike({ children, done }) {
         <svg style={{ position: 'absolute', left: -2, right: -2, top: '52%', width: 'calc(100% + 4px)' }}
              height="4" viewBox="0 0 100 4" preserveAspectRatio="none">
           <path d="M 0 2 C 20 0.5 40 3 60 1.5 C 80 0.5 95 3 100 2"
-                stroke={T.ink} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+                stroke={strokeColor} strokeWidth="1.6" fill="none" strokeLinecap="round" />
         </svg>
       )}
     </span>
@@ -65,15 +74,47 @@ export function MWRow({ todo, onToggle, onOpen }) {
   const prio = PRIORITY[todo.prio];
   const catColor = todo.cat === 'work' ? T.workCat : todo.cat === 'life' ? T.lifeCat : T.studyCat;
   const isDone = todo.state === 'done';
+
+  // Track touch start so horizontal pan / long press does not fire onOpen.
+  const press = useRef({ x: 0, y: 0, t: 0, valid: false });
+  const onPointerDown = (e) => {
+    press.current = {
+      x: e.clientX, y: e.clientY, t: Date.now(), valid: true,
+    };
+  };
+  const onPointerMove = (e) => {
+    if (!press.current.valid) return;
+    const dx = Math.abs(e.clientX - press.current.x);
+    const dy = Math.abs(e.clientY - press.current.y);
+    if (dx > 8 || dy > 12) press.current.valid = false;
+  };
+  const onPointerCancel = () => { press.current.valid = false; };
+  const onClick = (e) => {
+    const dt = Date.now() - press.current.t;
+    if (!press.current.valid || dt > 600) return;
+    onOpen && onOpen();
+  };
+
   return (
-    <div onClick={onOpen} style={{
-      display: 'flex', alignItems: 'center', gap: 12,
-      padding: '14px 26px', cursor: 'pointer',
-      borderBottom: `1px dashed ${T.hairline}55`,
-      animation: 'mwIn 280ms ease both',
-      opacity: isDone ? 0.5 : 1, transition: 'opacity 240ms',
-    }}>
-      <MWCheck state={todo.state} onClick={onToggle} size={22} />
+    <div
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerCancel={onPointerCancel}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      aria-label={`${todo.title} · ${cat.label} · ${STATE_LABEL[todo.state]}`}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '14px 18px 14px 22px', cursor: 'pointer',
+        borderBottom: `1px dashed ${T.hairline}55`,
+        animation: 'mwIn 280ms ease both',
+        opacity: isDone ? 0.55 : 1, transition: 'opacity 240ms',
+        WebkitTapHighlightColor: 'transparent',
+        userSelect: 'none',
+      }}
+    >
+      <MWCheck state={todo.state} onClick={onToggle} size={22} label={todo.title} />
       <div style={{
         width: 3, alignSelf: 'stretch', borderRadius: 2,
         background: prio.color,

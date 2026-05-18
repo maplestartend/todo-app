@@ -6,11 +6,13 @@
   /* Chrome / safe-area defaults for desktop frame mode */
   --mw-nav-pad-top: 54px;
   --mw-tab-pad-bottom: 26px;
-  /* Page bottom padding = tab bar height (43 + tab-pad-bottom) + 24px buffer,
-     so the last list item can scroll fully above the tab bar. */
-  --mw-page-pad-bottom: calc(var(--mw-tab-pad-bottom) + 67px);
-  /* FAB sits 70px (tab bar inner + 24 gap) above viewport bottom */
-  --mw-fab-bottom: calc(var(--mw-tab-pad-bottom) + 70px);
+  /* Tab bar inner height: paddingTop(8) + button(min-height 48 incl. icon/label) ≈ 59 */
+  --mw-tab-inner-h: 59px;
+  /* Page bottom padding clears tab bar height + FAB clearance + safety buffer
+     so the last list item can scroll fully above tab bar AND FAB. */
+  --mw-page-pad-bottom: calc(var(--mw-tab-pad-bottom) + var(--mw-tab-inner-h) + 56px);
+  /* FAB sits clearly above the tab bar with a visible gap (no overlap) */
+  --mw-fab-bottom: calc(var(--mw-tab-pad-bottom) + var(--mw-tab-inner-h) + 16px);
 }
 
 /* Mobile / standalone PWA mode — defer to OS safe areas */
@@ -90,3 +92,12 @@ button {
 /* Hide scrollbar entirely in mobile / standalone (touch handles it) */
 body.mw-mobile .mw-scroll { scrollbar-width: none; }
 body.mw-mobile .mw-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+/* Respect user's reduced-motion preference (a11y quick win) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

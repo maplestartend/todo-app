@@ -11,7 +11,7 @@ export default function Categories({ store, nav }) {
   const catColor = tab === 'work' ? T.workCat : tab === 'life' ? T.lifeCat : T.studyCat;
 
   return (
-    <MWPage>
+    <MWPage scrollKey={`folders-${tab}`}>
       <MWNavBar eyebrow="CATEGORIES" title="分類" />
 
       <div style={{ padding: '4px 22px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
