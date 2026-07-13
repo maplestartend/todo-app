@@ -29,14 +29,16 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        // woff2: the self-hosted subset Huninn font gets precached too.
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest,woff2}'],
         navigateFallback: '/index.html',
         runtimeCaching: [
           {
+            // Huninn is now self-hosted (precached above); only Google Fonts
+            // remain as external runtime-cached resources.
             urlPattern: ({ url }) =>
               url.origin === 'https://fonts.googleapis.com' ||
-              url.origin === 'https://fonts.gstatic.com' ||
-              url.origin === 'https://cdn.jsdelivr.net',
+              url.origin === 'https://fonts.gstatic.com',
             handler: 'CacheFirst',
             options: {
               cacheName: 'mw-fonts',

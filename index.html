@@ -24,13 +24,16 @@
       href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Huninn 手寫體：自行託管的子集化 woff2（ASCII + Big5 常用字，約 1.1MB，
+         原 CDN 完整 TTF 約 4.5MB）。罕見字 fallback 到 Noto Sans TC / 系統字型。 -->
+    <link rel="preload" href="/fonts/jf-openhuninn-2.0-subset.woff2" as="font" type="font/woff2" crossorigin />
     <style>
       @font-face {
         font-family: 'Huninn';
         font-style: normal;
         font-weight: 400;
         font-display: swap;
-        src: url('https://cdn.jsdelivr.net/gh/justfont/open-huninn-font@2.0/font/jf-openhuninn-2.0.ttf') format('truetype');
+        src: url('/fonts/jf-openhuninn-2.0-subset.woff2') format('woff2');
       }
     </style>
   </head>
