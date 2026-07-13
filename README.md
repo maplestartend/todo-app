@@ -1,14 +1,23 @@
 # 待辦事項 — Minimal Warm
 
-暖極簡風格的待辦事項 PWA，定位為 iPhone 主畫面安裝的個人 app。深色模式、手繪感 UI、安全區感知。
+**Live Demo：<https://todo-app-woad-zeta-20.vercel.app>**
+
+暖極簡風格的繁體中文待辦事項 PWA —— 手繪感 UI、深色模式、離線可用，定位為 iPhone 主畫面安裝的個人 app。無後端，資料全存在裝置的 `localStorage`。
+
+| 亮色模式 | 深色模式 |
+| --- | --- |
+| ![Home 畫面（亮色，寬螢幕 iPhone 外框展示模式）](docs/screenshots/home-light.png) | ![Home 畫面（深色模式）](docs/screenshots/home-dark.png) |
+
+> 寬螢幕以模擬 iPhone 外框展示；窄螢幕（≤500px）自動切換為全螢幕模式。首次開啟會載入以「今天」為基準的示範任務，可隨時在「設定 → 資料」重設或清空。
 
 ## 開發
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
-npm run build    # 打包到 dist/
-npm run preview  # 預覽打包結果
+npm run dev       # http://localhost:5173
+npm run build     # 打包到 dist/
+npm run preview   # 預覽打包結果
+npm run test:e2e  # Playwright E2E（首次先跑 npx playwright install chromium）
 ```
 
 ## 畫面
@@ -19,7 +28,7 @@ npm run preview  # 預覽打包結果
 4. **分類 Categories** — 工作 / 生活 / 學習
 5. **搜尋 Search** — 快速篩選 + 最近搜尋
 6. **完成 Archive** — 累積數 + 14 天打卡長條圖
-7. **設定 Settings** — 個人卡片、深色模式開關、主題色
+7. **設定 Settings** — 個人卡片、深色模式開關、主題色、示範資料重設 / 清空（皆有二次確認）
 
 ## 互動
 
@@ -46,22 +55,33 @@ npm run preview  # 預覽打包結果
 ## 技術
 
 - Vite 5 + React 18（單頁、無路由庫，自製 nav stack）
-- 字型：Huninn（繁中手寫）、Noto Sans TC、Caveat、Geist Mono
+- 字型：Huninn（繁中手寫，自行託管子集化 woff2）、Noto Sans TC、Caveat、Geist Mono
 - 響應式：寬螢幕顯示模擬的 iPhone 外框，窄螢幕（≤500px）切換為全螢幕模式
+
+### 字型優化
+
+- Huninn 原本從 CDN 載入完整 TTF（約 4.5MB）；現改為以 `pyftsubset` 子集化到「ASCII + Big5 常用字 + 全形標點 + 專案內出現過的字元」的 woff2（約 1.1MB），放在 [public/fonts/](public/fonts/) 自行託管，並加 `<link rel="preload">` 與 `font-display: swap`
+- 罕見字（子集之外）會 fallback 到 Noto Sans TC / 系統字型
 
 ## 資料層
 
 - 自製 `useStore`，資料寫入 `localStorage`（key: `mw_todos`）
 - Schema v2：payload 包成 `{ version, todos }`，未來改欄位可安全 migrate；v1 的 bare array (`mw_todos_v1`) 會自動讀取一次
+- 首次開啟（storage 為空）注入以當天日期為基準的示範任務，保證不會一開場就滿版逾期
 - 寫入 debounce 400ms，避免連續勾選 / 編輯時頻繁 stringify
 - 監聽 `storage` event：多分頁 / PWA 多視窗自動同步
 - `beforeunload` / `pagehide` flush 未寫入的 pending 變更
 
+## 測試 / CI
+
+- E2E：[tests/e2e/](tests/e2e/)（Playwright + Chromium），涵蓋新增任務、完成任務、重複任務 spawn、v1→v2 storage migration、示範資料重設 / 清空
+- CI：[.github/workflows/ci.yml](.github/workflows/ci.yml) — push / PR 觸發，Node 22，`npm ci → build → E2E`
+
 ## PWA / Service Worker
 
 - 透過 [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) 產生 Workbox SW（`registerType: 'autoUpdate'`）
-- 預快取所有 `js / css / html / svg / png` build 產物，離線可開
-- runtime cache: Google Fonts、jsdelivr (Huninn) 採 `CacheFirst`，1 年 TTL
+- 預快取所有 `js / css / html / svg / png / woff2` build 產物（含自託管 Huninn 字型），離線可開
+- runtime cache: Google Fonts 採 `CacheFirst`，1 年 TTL
 - manifest 由 plugin 注入，含 maskable icon、`viewport-fit=cover`、`apple-mobile-web-app-status-bar-style: black-translucent`
 - 加入 iPhone 主畫面後以 standalone 模式運行，safe-area 自動讓位給動態島與 Home Indicator
 
@@ -78,7 +98,9 @@ npm run preview  # 預覽打包結果
 - VoiceOver：checkbox 有 `aria-pressed` 與含任務標題的 `aria-label`
 - 尊重 `prefers-reduced-motion`（暈眩敏感者進場動畫會被縮短至接近瞬間）
 - 列表底部 padding 自動清出 tab bar + FAB 高度，最後一筆不會被遮
+- 設定頁的破壞性動作（清空資料）用顏色 + 文字雙重警示，鍵盤可操作、焦點可見
 
-## 來源
+## 來源與授權
 
-從 Claude Design 設計稿實作，後續為個人迭代維護。
+- 從 Claude Design 設計稿實作，後續為個人迭代維護
+- [MIT License](LICENSE) © 2026 maplestartend
