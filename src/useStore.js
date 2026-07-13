@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { INITIAL_TODOS } from './data.js';
+import { buildInitialTodos } from './data.js';
 import { nextDueDate } from './utils/dueDate.js';
 
 const STORAGE_KEY = 'mw_todos';
@@ -73,7 +73,8 @@ function loadInitial() {
   } catch (err) {
     console.warn('[useStore] load failed', err);
   }
-  return INITIAL_TODOS;
+  // First run (or unreadable storage): seed demo data relative to today.
+  return buildInitialTodos();
 }
 
 function writePayload(todos) {
@@ -160,6 +161,19 @@ export function useStore() {
 
   const remove = (id) => setTodos(ts => ts.filter(t => t.id !== id));
 
+  // Settings actions. Write through immediately — these are deliberate,
+  // destructive one-offs, not part of a rapid toggle burst.
+  const resetDemo = () => {
+    const fresh = buildInitialTodos();
+    writePayload(fresh);
+    setTodos(fresh);
+  };
+
+  const clearAll = () => {
+    writePayload([]);
+    setTodos([]);
+  };
+
   const stats = useMemo(() => {
     const total = todos.length;
     const done = todos.filter(t => t.state === 'done').length;
@@ -167,5 +181,5 @@ export function useStore() {
     return { total, done, doing, undone: total - done };
   }, [todos]);
 
-  return { todos, cycleState, setState, add, update, remove, stats };
+  return { todos, cycleState, setState, add, update, remove, resetDemo, clearAll, stats };
 }

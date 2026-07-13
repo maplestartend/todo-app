@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMW } from '../theme.js';
 import { MWPage, MWNavBar } from '../components/MWChrome.jsx';
 import { MWSwitch } from '../components/MWPrimitives.jsx';
@@ -37,6 +37,43 @@ function SettingsRow({ icon, label, right }) {
   );
 }
 
+/**
+ * Full-row action button for the settings list. Real <button> so keyboard
+ * (Tab + Enter/Space) works out of the box; destructive rows get a red
+ * color AND a text warning (never color alone).
+ */
+function SettingsActionRow({ icon, label, sub, danger, onClick }) {
+  const T = useMW();
+  const dangerColor = T.isDark ? '#e5715a' : '#c0432a';
+  const color = danger ? dangerColor : T.ink;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mw-settings-action"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        width: '100%', minHeight: 48, padding: '12px 14px',
+        background: 'transparent', border: 'none',
+        borderBottom: `1px dashed ${T.hairline}55`,
+        color, textAlign: 'left', cursor: 'pointer',
+        fontFamily: 'Huninn, sans-serif',
+      }}
+    >
+      <MWIcon name={icon} size={18} stroke={danger ? dangerColor : T.inkSoft} sw={1.5} />
+      <span style={{ flex: 1 }}>
+        <span style={{ display: 'block', fontSize: 15 }}>{label}</span>
+        {sub && (
+          <span style={{ display: 'block', fontSize: 11, color: danger ? dangerColor : T.muted, marginTop: 2 }}>
+            {sub}
+          </span>
+        )}
+      </span>
+      <MWIcon name="chevR" size={14} stroke={T.muted} />
+    </button>
+  );
+}
+
 export default function Settings({ dark, setDark, store, notify, setNotify }) {
   const T = useMW();
   const s = store?.stats || { total: 0, done: 0, doing: 0 };
@@ -45,6 +82,17 @@ export default function Settings({ dark, setDark, store, notify, setNotify }) {
     { label: '已完成', value: s.done },
     { label: '進行中', value: s.doing },
   ];
+  const [dataFeedback, setDataFeedback] = useState('');
+  const resetDemo = () => {
+    if (!window.confirm('重設示範資料？\n\n現有的所有任務會被刪除，並重新載入以今天為基準的示範任務。')) return;
+    store.resetDemo();
+    setDataFeedback('已重新載入示範資料');
+  };
+  const clearAll = () => {
+    if (!window.confirm('清空所有資料？\n\n所有任務將被永久刪除，此操作無法復原。')) return;
+    store.clearAll();
+    setDataFeedback('已清空所有資料');
+  };
   const permStatus = notificationStatus();
   const toggleNotify = async (on) => {
     if (!on) { setNotify(false); return; }
@@ -130,6 +178,29 @@ export default function Settings({ dark, setDark, store, notify, setNotify }) {
             需保持 app 開啟（或加入主畫面以 standalone 啟動，iOS 16.4+）才能收到提醒
           </div>
         )}
+      </SettingsGroup>
+
+      <SettingsGroup label="資料">
+        <SettingsActionRow
+          icon="calendar"
+          label="重設示範資料"
+          sub="以今天為基準重新載入示範任務（會取代現有任務）"
+          onClick={resetDemo}
+        />
+        <SettingsActionRow
+          icon="trash"
+          label="清空所有資料"
+          sub="永久刪除所有任務，無法復原"
+          danger
+          onClick={clearAll}
+        />
+        {/* Announce the outcome to screen readers (and sighted users) */}
+        <div role="status" aria-live="polite" style={{
+          padding: dataFeedback ? '8px 14px' : 0, fontSize: 11, color: T.muted,
+          lineHeight: 1.5,
+        }}>
+          {dataFeedback}
+        </div>
       </SettingsGroup>
 
       <SettingsGroup label="其他">

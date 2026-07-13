@@ -36,62 +36,85 @@ export const REMIND_OPTIONS = [
  *   subtasks: [{id, title, done}]
  *   note: string
  */
-const today = new Date('2026-05-18');
-const iso = (d) => d.toISOString().slice(0, 10);
-const addDays = (n) => { const d = new Date(today); d.setDate(d.getDate() + n); return d; };
+// Local-date formatter — toISOString() is UTC and would shift a day for
+// evening times in UTC+ timezones.
+const iso = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const hhmm = (d) =>
+  `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
-export const INITIAL_TODOS = [
-  {
-    id: 1, title: '完成季度報告草稿', cat: 'work', prio: 'high', state: 'doing',
-    time: '14:30', dueDate: iso(today), dueTime: '14:30',
-    repeat: 'none', remindBefore: 30, lastNotifiedAt: null,
-    subtasks: [
-      { id: 1, title: '收集資料來源', done: true },
-      { id: 2, title: '撰寫摘要與重點', done: false },
-      { id: 3, title: '請主管 review', done: false },
-    ],
-    note: '記得引用上季度的 KPI 對照圖；如果時間夠的話加上 Q3 的趨勢分析。',
-  },
-  {
-    id: 2, title: '準備明天會議簡報', cat: 'work', prio: 'high', state: 'todo',
-    time: '今晚', dueDate: iso(today), dueTime: '21:00',
-    repeat: 'none', remindBefore: 60, lastNotifiedAt: null,
-    subtasks: [], note: '',
-  },
-  {
-    id: 3, title: '回覆 Anna 的 email', cat: 'work', prio: 'mid', state: 'todo',
-    time: '下午', dueDate: iso(addDays(1)), dueTime: '',
-    repeat: 'none', remindBefore: null, lastNotifiedAt: null,
-    subtasks: [], note: '',
-  },
-  {
-    id: 4, title: '買菜:番茄、雞蛋、橄欖油', cat: 'life', prio: 'mid', state: 'todo',
-    time: '傍晚', dueDate: iso(addDays(1)), dueTime: '18:30',
-    repeat: 'none', remindBefore: 30, lastNotifiedAt: null,
-    subtasks: [], note: '',
-  },
-  {
-    id: 5, title: '晨跑 30 分鐘', cat: 'life', prio: 'low', state: 'done',
-    time: '07:00', dueDate: iso(today), dueTime: '07:00',
-    repeat: 'daily', remindBefore: null, lastNotifiedAt: null,
-    subtasks: [], note: '',
-  },
-  {
-    id: 6, title: '讀完《設計的心理學》第三章', cat: 'study', prio: 'mid', state: 'doing',
-    time: '21:00', dueDate: iso(addDays(3)), dueTime: '21:00',
-    repeat: 'none', remindBefore: null, lastNotifiedAt: null,
-    subtasks: [], note: '',
-  },
-  {
-    id: 7, title: '複習日文單字 50 個', cat: 'study', prio: 'low', state: 'done',
-    time: '已完成', dueDate: iso(addDays(-1)), dueTime: '',
-    repeat: 'daily', remindBefore: null, lastNotifiedAt: null,
-    subtasks: [], note: '',
-  },
-  {
-    id: 8, title: '預約牙醫', cat: 'life', prio: 'low', state: 'todo',
-    time: '本週', dueDate: iso(addDays(5)), dueTime: '',
-    repeat: 'none', remindBefore: 1440, lastNotifiedAt: null,
-    subtasks: [], note: '',
-  },
-];
+/**
+ * Build the demo seed todos relative to `now`, so a first-time visitor never
+ * sees overdue tasks. Open tasks land today / tomorrow / this week; the two
+ * completed ones keep natural past timestamps.
+ */
+export function buildInitialTodos(now = new Date()) {
+  const addDays = (n) => { const d = new Date(now); d.setDate(d.getDate() + n); return d; };
+  // A due moment `hoursAhead` from now, rounded up to the next half hour so it
+  // reads like a deliberate schedule. Always in the future — near midnight it
+  // simply rolls into tomorrow, still never overdue.
+  const laterToday = (hoursAhead) => {
+    const d = new Date(now.getTime() + hoursAhead * 3600000);
+    d.setMinutes(d.getMinutes() >= 30 ? 60 : 30, 0, 0);
+    return d;
+  };
+  const due1 = laterToday(2);
+  const due2 = laterToday(5);
+  const morning = new Date(now); morning.setHours(7, 0, 0, 0);
+
+  return [
+    {
+      id: 1, title: '完成季度報告草稿', cat: 'work', prio: 'high', state: 'doing',
+      time: hhmm(due1), dueDate: iso(due1), dueTime: hhmm(due1),
+      repeat: 'none', remindBefore: 30, lastNotifiedAt: null,
+      subtasks: [
+        { id: 1, title: '收集資料來源', done: true },
+        { id: 2, title: '撰寫摘要與重點', done: false },
+        { id: 3, title: '請主管 review', done: false },
+      ],
+      note: '記得引用上季度的 KPI 對照圖；如果時間夠的話加上 Q3 的趨勢分析。',
+    },
+    {
+      id: 2, title: '準備明天會議簡報', cat: 'work', prio: 'high', state: 'todo',
+      time: hhmm(due2), dueDate: iso(due2), dueTime: hhmm(due2),
+      repeat: 'none', remindBefore: 60, lastNotifiedAt: null,
+      subtasks: [], note: '',
+    },
+    {
+      id: 3, title: '回覆 Anna 的 email', cat: 'work', prio: 'mid', state: 'todo',
+      time: '下午', dueDate: iso(addDays(1)), dueTime: '',
+      repeat: 'none', remindBefore: null, lastNotifiedAt: null,
+      subtasks: [], note: '',
+    },
+    {
+      id: 4, title: '買菜:番茄、雞蛋、橄欖油', cat: 'life', prio: 'mid', state: 'todo',
+      time: '傍晚', dueDate: iso(addDays(1)), dueTime: '18:30',
+      repeat: 'none', remindBefore: 30, lastNotifiedAt: null,
+      subtasks: [], note: '',
+    },
+    {
+      id: 5, title: '晨跑 30 分鐘', cat: 'life', prio: 'low', state: 'done',
+      time: '07:00', dueDate: iso(morning), dueTime: '07:00',
+      repeat: 'daily', remindBefore: null, lastNotifiedAt: null,
+      subtasks: [], note: '',
+    },
+    {
+      id: 6, title: '讀完《設計的心理學》第三章', cat: 'study', prio: 'mid', state: 'doing',
+      time: '21:00', dueDate: iso(addDays(3)), dueTime: '21:00',
+      repeat: 'none', remindBefore: null, lastNotifiedAt: null,
+      subtasks: [], note: '',
+    },
+    {
+      id: 7, title: '複習日文單字 50 個', cat: 'study', prio: 'low', state: 'done',
+      time: '已完成', dueDate: iso(addDays(-1)), dueTime: '',
+      repeat: 'daily', remindBefore: null, lastNotifiedAt: null,
+      subtasks: [], note: '',
+    },
+    {
+      id: 8, title: '預約牙醫', cat: 'life', prio: 'low', state: 'todo',
+      time: '本週', dueDate: iso(addDays(5)), dueTime: '',
+      repeat: 'none', remindBefore: 1440, lastNotifiedAt: null,
+      subtasks: [], note: '',
+    },
+  ];
+}
