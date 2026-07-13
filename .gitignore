@@ -9,3 +9,5 @@ dist
 .snapshots
 .review-screenshots
 .vercel
+test-results
+playwright-report
